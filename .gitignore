@@ -13,6 +13,7 @@ compile_commands.json
 ./vcs.xml
 ./workspace.xml
 ./modules.xml
+./docs/llj-handbook.md
 GRTAGS
 GPATH
 GTAGS
