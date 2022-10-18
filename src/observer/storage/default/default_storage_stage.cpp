@@ -168,11 +168,25 @@ void DefaultStorageStage::handle_event(StageEvent *event)
       std::string result = load_data(dbname, table_name, file_name);
       snprintf(response, sizeof(response), "%s", result.c_str());
     } break;
+
+    // 李立基: 解析 drop SQL 语句.
+    case SCF_DROP_TABLE: {
+      LOG_INFO("jie xi drop SQL.");
+
+      const DropTable& drop_table = sql->sstr.drop_table;  // 拿到要删除的表
+      rc = handler_->drop_table(dbname, drop_table.relation_name);  // 调用 handler 中的 drop table 接口
+      if (rc == RC::SUCCESS) {
+        rc = current_trx->drop_table(drop_table.relation_name);
+      }
+      snprintf(response,sizeof(response),"%s\n", rc == RC::SUCCESS ? "SUCCESS" : "FAILURE"); // 返回结果
+    } break;
+
     default:
       snprintf(response, sizeof(response), "Unsupported sql: %d\n", sql->flag);
       break;
   }
 
+  // 李立基: 这是个事务管理?
   if (rc == RC::SUCCESS && !session->is_trx_multi_operation_mode()) {
     rc = current_trx->commit();
     if (rc != RC::SUCCESS) {

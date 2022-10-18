@@ -163,6 +163,30 @@ void Trx::delete_operation(Table *table, const RID &rid)
   table_operations_iter->second.erase(tmp);
 }
 
+/*
+ * 作者: 李立基
+ * 说明: 删除 table 所对应的事务
+ */
+RC Trx::drop_table(const char *relation_name)
+{
+  LOG_INFO("drop %s table. operations size: %d", relation_name, operations_.size());
+  std::unordered_map<Table *, OperationSet>::iterator it;
+  for (it = operations_.begin(); it != operations_.end(); it++) {
+    Table *table = it->first;
+    LOG_INFO("table name: %s", table->name());
+    if (strcmp(table->name(), relation_name) == 0) {
+      (it->second).clear();
+      operations_.erase(it);
+      LOG_INFO("erase success.");
+      break;
+    }
+  }
+  // int en = operations_.erase(table);
+  LOG_INFO("operations size: %d", operations_.size());
+
+  return RC::SUCCESS;
+}
+
 RC Trx::commit()
 {
   RC rc = RC::SUCCESS;

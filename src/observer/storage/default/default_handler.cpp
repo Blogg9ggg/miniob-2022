@@ -151,9 +151,19 @@ RC DefaultHandler::create_table(
   return db->create_table(relation_name, attribute_count, attributes);
 }
 
+/*
+ * 作者: 李立基
+ * 说明: 作为一个 handler, 处理上层传入的 drop table 请求. 
+ * 主要是根据 dbname 找到对应的 Db, 然后调用这个 Db 的 drop table 接口.
+ */
+
 RC DefaultHandler::drop_table(const char *dbname, const char *relation_name)
 {
-  return RC::GENERIC_ERROR;
+  Db *db = find_db(dbname);
+  if(db == nullptr) {
+    return RC::SCHEMA_DB_NOT_OPENED;
+  }
+  return db->drop_table(relation_name); // 直接调用db的删表接口
 }
 
 RC DefaultHandler::create_index(

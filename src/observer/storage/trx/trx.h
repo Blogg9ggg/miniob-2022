@@ -94,6 +94,8 @@ public:
   ~Trx();
 
 public:
+  RC drop_table(const char *relation_name);
+  
   RC insert_record(Table *table, Record *record);
   RC delete_record(Table *table, Record *record);
 
