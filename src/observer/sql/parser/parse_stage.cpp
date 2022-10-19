@@ -130,7 +130,13 @@ RC ParseStage::handle_request(StageEvent *event)
   }
 
   RC ret = parse(sql.c_str(), query_result);
-  if (ret != RC::SUCCESS) {
+  if (ret == RC::INVALID_ARGUMENT) {
+    // sql_event->session_event()->set_response("FAILURE\n");
+    sql_event->session_event()->set_response("TEST\n");
+    query_destroy(query_result);
+    return RC::INTERNAL;
+  }
+  else if (ret != RC::SUCCESS) {
     // set error information to event
     sql_event->session_event()->set_response("Failed to parse sql\n");
     query_destroy(query_result);

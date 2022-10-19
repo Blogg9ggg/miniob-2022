@@ -57,6 +57,35 @@ void value_init_string(Value *value, const char *v)
   value->type = CHARS;
   value->data = strdup(v);
 }
+/*
+ * 作者: 李立基
+ * 说明: 检查 date 是否合法.
+ */
+bool check_date(int y, int m, int d)
+{
+    static int mon[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    bool leap = (y%400==0 || (y%100 && y%4==0));
+    return y > 0
+        && (m > 0)&&(m <= 12)
+        && (d > 0)&&(d <= ((m==2 && leap)?1:0) + mon[m]);
+}
+/*
+ * 作者: 李立基
+ * 说明: 初始化 date.
+ */
+int value_init_date(Value* value, const char* v) {
+    value->type = DATES;
+    int y,m,d;
+    sscanf(v, "%d-%d-%d", &y, &m, &d);//not check return value eq 3, lex guarantee
+    LOG_INFO("y: %d, m: %d, d:%d\n", y, m, d);
+    bool b = check_date(y,m,d);
+    LOG_INFO("result: %d\n", b);
+    if(!b) return -1;
+    int dv = y*10000+m*100+d;
+    value->data = malloc(sizeof(dv));//TODO:check malloc failure
+    memcpy(value->data, &dv, sizeof(dv));
+    return 0;
+}
 void value_destroy(Value *value)
 {
   value->type = UNDEFINED;
@@ -423,8 +452,10 @@ extern "C" int sql_parse(const char *st, Query *sqls);
 RC parse(const char *st, Query *sqln)
 {
   sql_parse(st, sqln);
-
-  if (sqln->flag == SCF_ERROR)
+  LOG_INFO("flag = %d\n", sqln->flag);
+  if (sqln->flag == SCF_INVALID_VALUE)
+    return INVALID_ARGUMENT;
+  else if (sqln->flag == SCF_ERROR)
     return SQL_SYNTAX;
   else
     return SUCCESS;
