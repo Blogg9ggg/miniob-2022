@@ -19,4 +19,22 @@
 
    
 
-2. 123
+2. 运行数据库
+
+   ```
+   ./bin/observer -s miniob.sock -f ../etc/observer.ini &
+   ./bin/obclient -s miniob.sock
+   ```
+
+   
+
+3. 开 ssh
+
+   ```
+   /usr/sbin/sshd -f /etc/ssh/sshd_config
+   ```
+
+   
+
+4. show index 进度
+yacc_sql.y, parse.cpp, parse_defs.h

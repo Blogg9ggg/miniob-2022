@@ -920,6 +920,11 @@ Index *Table::find_index_by_field(const char *field_name) const
   return nullptr;
 }
 
+std::vector<Index *> *Table::indexes()
+{
+  return &indexes_;
+}
+
 IndexScanner *Table::find_index_for_scan(const DefaultConditionFilter &filter)
 {
   const ConDesc *field_cond_desc = nullptr;

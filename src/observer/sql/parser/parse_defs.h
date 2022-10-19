@@ -124,6 +124,14 @@ typedef struct {
   char *attribute_name;  // Attribute name
 } CreateIndex;
 
+/*
+ * 作者: 李立基
+ * 说明: struct of show_index
+ */
+typedef struct {
+  char *relation_name;   // Relation name
+} ShowIndex;
+
 // struct of  drop_index
 typedef struct {
   const char *index_name;  // Index name
@@ -146,6 +154,7 @@ union Queries {
   CreateTable create_table;
   DropTable drop_table;
   CreateIndex create_index;
+  ShowIndex show_index;  // 李立基: 增加 ShowIndex 字段
   DropIndex drop_index;
   DescTable desc_table;
   LoadData load_data;
@@ -160,9 +169,9 @@ enum SqlCommandFlag {
   SCF_UPDATE,
   SCF_DELETE,
   SCF_CREATE_TABLE,
-  SCF_DELETE_TABLE,
   SCF_DROP_TABLE,
   SCF_CREATE_INDEX,
+  SCF_SHOW_INDEX, // 李立基: 增加 SCF_SHOW_INDEX 字段
   SCF_DROP_INDEX,
   SCF_SYNC,
   SCF_SHOW_TABLES,

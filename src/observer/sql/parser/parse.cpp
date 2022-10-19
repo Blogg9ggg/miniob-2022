@@ -269,6 +269,26 @@ void create_index_destroy(CreateIndex *create_index)
   create_index->attribute_name = nullptr;
 }
 
+/*
+ * 作者: 李立基
+ * 说明: show index 初始化, 将表名复制进去.
+ */
+void show_index_init(ShowIndex *show_index, const char *relation_name)
+{
+  show_index->relation_name = strdup(relation_name);
+}
+
+/*
+ * 作者: 李立基
+ * 说明: show index 资源回收.
+ */
+void show_index_destroy(ShowIndex *show_index)
+{
+  free(show_index->relation_name);
+
+  show_index->relation_name = nullptr;
+}
+
 void drop_index_init(DropIndex *drop_index, const char *index_name)
 {
   drop_index->index_name = strdup(index_name);
@@ -355,6 +375,10 @@ void query_reset(Query *query)
     } break;
     case SCF_CREATE_INDEX: {
       create_index_destroy(&query->sstr.create_index);
+    } break;
+    // 李立基: show index 资源回收
+    case SCF_SHOW_INDEX: {
+      show_index_destroy(&query->sstr.show_index);
     } break;
     case SCF_DROP_INDEX: {
       drop_index_destroy(&query->sstr.drop_index);

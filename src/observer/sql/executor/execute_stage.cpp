@@ -171,6 +171,11 @@ void ExecuteStage::handle_request(common::StageEvent *event)
         do_desc_table(sql_event);
       } break;
 
+     // 李立基: 增加对 SCF_SHOW_INDEX 的处理
+      case SCF_SHOW_INDEX: {
+        do_show_index(sql_event);
+      } break;
+
       case SCF_DROP_TABLE:
       case SCF_DROP_INDEX:
       case SCF_LOAD_DATA: {
@@ -501,6 +506,39 @@ RC ExecuteStage::do_create_index(SQLStageEvent *sql_event)
   RC rc = table->create_index(nullptr, create_index.index_name, create_index.attribute_name);
   sql_event->session_event()->set_response(rc == RC::SUCCESS ? "SUCCESS\n" : "FAILURE\n");
   return rc;
+}
+
+/*
+ * 作者: 李立基
+ * 说明: 实现 show index 功能
+ */
+RC ExecuteStage::do_show_index(SQLStageEvent *sql_event)
+{
+  Query *query = sql_event->query();
+  Db *db = sql_event->session_event()->session()->get_current_db();
+  const char *table_name = query->sstr.show_index.relation_name;
+  Table *table = db->find_table(table_name);
+
+  std::string title = "TABLE | NON_UNIQUE | KEY_NAME | SEQ_IN_INDEX | COLUMN_NAME";
+
+  std::stringstream ss;
+  if (table != nullptr) {
+    const std::vector<Index *> *indexes = table->indexes();
+    ss << title << std::endl;
+    for (Index *ind : *indexes) {
+      // TODO: 现在默认不是唯一索引, 后续修改
+      // TODO: 目前没有多列索引, 列在索引中的序号默认为 1
+      ss << table->name() << " | " << 
+      "1" << " | " << 
+      ind->index_meta().name() << " | " << 
+      "1" << " | " << 
+      ind->index_meta().field() << std::endl;
+    }
+  } else {
+    ss << "FAILURE" << std::endl;
+  }
+  sql_event->session_event()->set_response(ss.str().c_str());
+  return RC::SUCCESS;
 }
 
 RC ExecuteStage::do_show_tables(SQLStageEvent *sql_event)
