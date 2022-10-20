@@ -22,27 +22,28 @@ See the Mulan PSL v2 for more details. */
 void TupleCell::to_string(std::ostream &os) const
 {
   switch (attr_type_) {
-  case INTS: {
-    os << *(int *)data_;
-  } break;
-  // 李立基: 增加 DATE 字段
-  case DATES: {
-    int v = *(int *)data_;
-    os << date2string(v);
-  } break;
-  case FLOATS: {
-    float v = *(float *)data_;
-    os << double2string(v);
-  } break;
-  case CHARS: {
-    for (int i = 0; i < length_; i++) {
-      if (data_[i] == '\0') {
-        break;
-      }
+    case INTS: {
+      os << *(int *)data_;
     } break;
-    default: {
-      LOG_WARN("unsupported attr type: %d", attr_type_);
+    // 李立基: 增加 DATE 字段
+    case DATES: {
+      int v = *(int *)data_;
+      os << date2string(v);
     } break;
+    case FLOATS: {
+      float v = *(float *)data_;
+      os << double2string(v);
+    } break;
+    case CHARS: {
+      for (int i = 0; i < length_; i++) {
+        if (data_[i] == '\0') {
+          break;
+        }
+      } break;
+      default: {
+        LOG_WARN("unsupported attr type: %d", attr_type_);
+      } break;
+    }
   }
 }
 
@@ -50,17 +51,18 @@ int TupleCell::compare(const TupleCell &other) const
 {
   if (this->attr_type_ == other.attr_type_) {
     switch (this->attr_type_) {
-    case INTS: return compare_int(this->data_, other.data_);
-    // 李立基: 增加 date 字段
-    case DATES: return compare_int(this->data_, other.data_);
-    case FLOATS: return compare_float(this->data_, other.data_);
-    case CHARS: return compare_string(this->data_, this->length_, other.data_, other.length_);
-    default: {
-      LOG_WARN("unsupported type: %d", this->attr_type_);
-    }
-    if (other.attr_type_ == FLOATS) {
-      float this_data = atof(this->data_);
-      return compare_float(&this_data, other.data_);
+      case INTS: return compare_int(this->data_, other.data_);
+      // 李立基: 增加 date 字段
+      case DATES: return compare_int(this->data_, other.data_);
+      case FLOATS: return compare_float(this->data_, other.data_);
+      case CHARS: return compare_string(this->data_, this->length_, other.data_, other.length_);
+      default: {
+        LOG_WARN("unsupported type: %d", this->attr_type_);
+      }
+      if (other.attr_type_ == FLOATS) {
+        float this_data = atof(this->data_);
+        return compare_float(&this_data, other.data_);
+      }
     }
   }
   LOG_WARN("not supported");
