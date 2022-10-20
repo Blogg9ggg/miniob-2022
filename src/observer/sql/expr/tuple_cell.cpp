@@ -71,7 +71,7 @@ int TupleCell::compare(const TupleCell &other) const
       return compare_float(&this_data, other.data_);
     }
     if (other.attr_type_ == CHARS) {
-      int other_data = (int)round(atof(other.data_));
+      int other_data = atoi(other.data_);
       return compare_int(this->data_, &other_data);
     }
   } else if (this->attr_type_ == FLOATS) {
@@ -85,7 +85,7 @@ int TupleCell::compare(const TupleCell &other) const
     }
   } else if (this->attr_type_ == CHARS) {
     if (other.attr_type_ == INTS) {
-      int this_data = (int)round(atof(this->data_));
+      int this_data = atoi(this->data_);
       return compare_int(&this_data, other.data_);
     }
     if (other.attr_type_ == FLOATS) {
