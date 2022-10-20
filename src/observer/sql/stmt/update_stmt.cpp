@@ -33,7 +33,7 @@ UpdateStmt::~UpdateStmt()
   }
 }
 
-RC UpdateStmt::create(Db *db, Updates &update_sql, Stmt *&stmt)
+RC UpdateStmt::create(Db *db, const Updates &update_sql, Stmt *&stmt)
 {
   const char *table_name = update_sql.relation_name;
   char *attribute_name = update_sql.attribute_name;
@@ -58,15 +58,7 @@ RC UpdateStmt::create(Db *db, Updates &update_sql, Stmt *&stmt)
   }
   // check update_field type
   if (update_field->type() != update_value.type) {
-    RC rc = cast_value_to_field_type(&update_sql.value, update_field->type());
-    if (rc != RC::SUCCESS) {
-      LOG_WARN("field type mismatch. table=%s, field=%s, field type=%d, value_type=%d",
-          table_name,
-          update_field->name(),
-          update_field->type(),
-          update_value.type);
-      return rc;
-    }
+    return RC::SCHEMA_FIELD_TYPE_MISMATCH;
   }
 
   std::unordered_map<std::string, Table *> table_map;
