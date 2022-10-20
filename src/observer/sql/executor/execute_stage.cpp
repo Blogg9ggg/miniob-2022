@@ -664,6 +664,7 @@ RC ExecuteStage::do_delete(SQLStageEvent *sql_event)
   }
   return rc;
 }
+// chenfr
 RC ExecuteStage::do_update(SQLStageEvent *sql_event)
 {
   Stmt *stmt = sql_event->stmt();
@@ -679,9 +680,17 @@ RC ExecuteStage::do_update(SQLStageEvent *sql_event)
   }
 
   UpdateStmt *update_stmt = (UpdateStmt *)stmt;
-  TableScanOperator scan_oper(update_stmt->table());
+
+  Operator *scan_oper = try_to_create_index_scan_operator(update_stmt->filter_stmt());
+  if (nullptr == scan_oper) {
+    scan_oper = new TableScanOperator(update_stmt->table());
+  }
+
+  DEFER([&]() { delete scan_oper; });
+
+//  TableScanOperator scan_oper(update_stmt->table());
   PredicateOperator pred_oper(update_stmt->filter_stmt());
-  pred_oper.add_child(&scan_oper);
+  pred_oper.add_child(scan_oper);
   UpdateOperator update_oper(update_stmt, trx);
   update_oper.add_child(&pred_oper);
   RC rc = update_oper.open();

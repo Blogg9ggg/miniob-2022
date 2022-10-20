@@ -36,7 +36,7 @@ RC UpdateOperator::open()
 
     RowTuple *row_tuple = static_cast<RowTuple *>(tuple);
     Record &old_record = row_tuple->record();
-    // TODO
+    // TODO: 多字段update支持
     const FieldMeta *field = table_meta.field(update_stmt_->update_field());
     int record_size = table_meta.record_size();
     char *new_record_data = new char[record_size];

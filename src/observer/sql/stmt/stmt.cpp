@@ -18,8 +18,10 @@ See the Mulan PSL v2 for more details. */
 #include "sql/stmt/delete_stmt.h"
 #include "sql/stmt/select_stmt.h"
 #include "sql/stmt/update_stmt.h"
+#include "stmt.h"
+#include "math.h"
 
-RC Stmt::create_stmt(Db *db, const Query &query, Stmt *&stmt)
+RC Stmt::create_stmt(Db *db, Query &query, Stmt *&stmt)
 {
   stmt = nullptr;
 
@@ -31,7 +33,7 @@ RC Stmt::create_stmt(Db *db, const Query &query, Stmt *&stmt)
       return DeleteStmt::create(db, query.sstr.deletion, stmt);
     }
     case SCF_UPDATE: {
-      return UpdateStmt::create(db,query.sstr.update,stmt);
+      return UpdateStmt::create(db, query.sstr.update, stmt);
     }
     case SCF_SELECT: {
       return SelectStmt::create(db, query.sstr.selection, stmt);
@@ -41,4 +43,52 @@ RC Stmt::create_stmt(Db *db, const Query &query, Stmt *&stmt)
     } break;
   }
   return RC::UNIMPLENMENT;
+}
+
+RC Stmt::cast_value_to_field_type(Value *value, AttrType field_type)
+{
+  AttrType value_type = value->type;
+  void *data = value->data;
+  // 修改对应位置的value
+  // TODO how to free the new inited value
+  switch (field_type) {
+    case CHARS: {
+      const char *new_data;
+      if (value_type == INTS) {
+        new_data = std::to_string(*(int *)data).c_str();
+      } else if (value_type == FLOATS) {
+        new_data = std::to_string(*(float *)data).c_str();
+      } else {
+        return RC::SCHEMA_FIELD_TYPE_MISMATCH;
+      }
+      value_init_string(value, new_data);
+    } break;
+    case INTS: {
+      int new_data;
+      if (value_type == CHARS) {
+        new_data = atoi((char *)data);
+      } else if (value_type == FLOATS) {
+        new_data = (int)round(*(float *)data);
+      } else {
+        return RC::SCHEMA_FIELD_TYPE_MISMATCH;
+      }
+      value_init_integer(value, new_data);
+    } break;
+    case FLOATS: {
+      float new_data;
+      if (value_type == CHARS) {
+        new_data = atof((char *)data);
+      } else if (value_type == INTS) {
+        new_data = *(int *)data;
+      } else {
+        return RC::SCHEMA_FIELD_TYPE_MISMATCH;
+      }
+      value_init_float(value, new_data);
+    } break;
+    default: {
+      return RC::SCHEMA_FIELD_TYPE_MISMATCH;
+    }
+  }
+  free(data);
+  return RC::SUCCESS;
 }
