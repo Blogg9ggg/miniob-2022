@@ -67,7 +67,7 @@ RC Stmt::cast_value_to_field_type(Value *value, AttrType field_type)
     case INTS: {
       int new_data;
       if (value_type == CHARS) {
-        new_data = atoi((char *)data);
+        new_data = (int)round(atof((char *)data));
       } else if (value_type == FLOATS) {
         new_data = (int)round(*(float *)data);
       } else {
