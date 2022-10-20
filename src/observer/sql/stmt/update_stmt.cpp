@@ -65,13 +65,13 @@ RC UpdateStmt::create(Db *db, const Updates &update_sql, Stmt *&stmt)
   table_map.insert(std::pair<std::string, Table *>(std::string(table_name), table));
 
   FilterStmt *filter_stmt = nullptr;
-  if (update_sql.condition_num > 0) {
-    RC rc = FilterStmt::create(db, table, &table_map, update_sql.conditions, update_sql.condition_num, filter_stmt);
-    if (rc != RC::SUCCESS) {
-      LOG_WARN("failed to create filter statement. rc=%d:%s", rc, strrc(rc));
-      return rc;
-    }
+
+  RC rc = FilterStmt::create(db, table, &table_map, update_sql.conditions, update_sql.condition_num, filter_stmt);
+  if (rc != RC::SUCCESS) {
+    LOG_WARN("failed to create filter statement. rc=%d:%s", rc, strrc(rc));
+    return rc;
   }
+
   Value values[1] = {update_value};
   stmt = new UpdateStmt(table, values, 1, attribute_name, filter_stmt);
 
