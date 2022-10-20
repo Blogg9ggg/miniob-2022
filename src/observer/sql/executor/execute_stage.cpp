@@ -171,7 +171,7 @@ void ExecuteStage::handle_request(common::StageEvent *event)
         do_desc_table(sql_event);
       } break;
 
-     // 李立基: 增加对 SCF_SHOW_INDEX 的处理
+        // 李立基: 增加对 SCF_SHOW_INDEX 的处理
       case SCF_SHOW_INDEX: {
         do_show_index(sql_event);
       } break;
@@ -296,10 +296,17 @@ IndexScanOperator *try_to_create_index_scan_operator(FilterStmt *filter_stmt)
     if (left->type() == ExprType::FIELD && right->type() == ExprType::VALUE) {
     } else if (left->type() == ExprType::VALUE && right->type() == ExprType::FIELD) {
       std::swap(left, right);
-    }else{
+    } else {
       continue;
     }
     FieldExpr &left_field_expr = *(FieldExpr *)left;
+    // chenfarong: 类型相同才能走索引
+    ValueExpr &right_value_expr = *(ValueExpr *)right;
+    TupleCell value;
+    right_value_expr.get_tuple_cell(value);
+    if (value.attr_type() != left_field_expr.field().attr_type()) {
+      continue;
+    }
     const Field &field = left_field_expr.field();
     const Table *table = field.table();
     Index *index = table->find_index_by_field(field.field_name());
@@ -530,11 +537,11 @@ RC ExecuteStage::do_show_index(SQLStageEvent *sql_event)
     for (Index *ind : *indexes) {
       // TODO: 现在默认不是唯一索引, 后续修改
       // TODO: 目前没有多列索引, 列在索引中的序号默认为 1
-      ss << table->name() << " | " << 
-      "1" << " | " << 
-      ind->index_meta().name() << " | " << 
-      "1" << " | " << 
-      ind->index_meta().field() << std::endl;
+      ss << table->name() << " | "
+         << "1"
+         << " | " << ind->index_meta().name() << " | "
+         << "1"
+         << " | " << ind->index_meta().field() << std::endl;
     }
   } else {
     ss << "FAILURE" << std::endl;
@@ -690,7 +697,7 @@ RC ExecuteStage::do_update(SQLStageEvent *sql_event)
 
   DEFER([&]() { delete scan_oper; });
 
-//  TableScanOperator scan_oper(update_stmt->table());
+  //  TableScanOperator scan_oper(update_stmt->table());
   PredicateOperator pred_oper(update_stmt->filter_stmt());
   pred_oper.add_child(scan_oper);
   UpdateOperator update_oper(update_stmt, trx);
