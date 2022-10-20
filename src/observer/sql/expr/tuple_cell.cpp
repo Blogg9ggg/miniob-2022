@@ -48,6 +48,11 @@ void TupleCell::to_string(std::ostream &os) const
   }
 }
 
+int TupleCell::lcompare(const TupleCell &other) const
+{
+  return lcompare_string(this->data_, this->length_, other.data_, other.length_);
+}
+
 int TupleCell::compare(const TupleCell &other) const
 {
   if (this->attr_type_ == other.attr_type_) {

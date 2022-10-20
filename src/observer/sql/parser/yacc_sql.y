@@ -97,6 +97,7 @@ ParserContext *get_context(yyscan_t scanner)
         LOAD
         DATA
         INFILE
+		LK
         EQ
         LT
         GT
@@ -330,7 +331,8 @@ value:
 		}
     |SSS {
 			$1 = substr($1,1,strlen($1)-2);
-  		value_init_string(&CONTEXT->values[CONTEXT->value_length++], $1);
+  			value_init_string(&CONTEXT->values[CONTEXT->value_length++], $1);
+			
 		}
     ;
     
@@ -436,7 +438,7 @@ condition:
 		{
 			RelAttr left_attr;
 			relation_attr_init(&left_attr, NULL, $1);
-
+			
 			Value *right_value = &CONTEXT->values[CONTEXT->value_length - 1];
 
 			Condition condition;
@@ -585,6 +587,7 @@ comOp:
     | LE { CONTEXT->comp = LESS_EQUAL; }
     | GE { CONTEXT->comp = GREAT_EQUAL; }
     | NE { CONTEXT->comp = NOT_EQUAL; }
+	| LK { CONTEXT->comp = LIKE; }
     ;
 
 load_data:

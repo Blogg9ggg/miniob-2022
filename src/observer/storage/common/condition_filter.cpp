@@ -55,6 +55,11 @@ RC DefaultConditionFilter::init(const ConDesc &left, const ConDesc &right, AttrT
   right_ = right;
   attr_type_ = attr_type;
   comp_op_ = comp_op;
+
+  // 李立基: LIKE 只处理字符串
+  if (comp_op_ == LIKE && attr_type_ != CHARS) {
+    return RC::INVALID_ARGUMENT;
+  }
   return RC::SUCCESS;
 }
 
@@ -172,6 +177,8 @@ bool DefaultConditionFilter::filter(const Record &rec) const
 
   switch (comp_op_) {
     case EQUAL_TO:
+      return 0 == cmp_result;
+    case LIKE:
       return 0 == cmp_result;
     case LESS_EQUAL:
       return cmp_result <= 0;

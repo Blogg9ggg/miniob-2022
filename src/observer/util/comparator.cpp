@@ -17,6 +17,76 @@ See the Mulan PSL v2 for more details. */
 
 const double epsilon = 1E-6;
 
+/*
+ * 作者: 李立基
+ * 说明: 简单的模糊匹配.
+ * TODO: 如果字符串很长再加上记忆化.
+ */
+bool dfs(const char *target, int len1, int ind1, 
+  const char *pattern, int len2, int ind2, int cntc, int cntt)
+{
+  if (ind2 == len2)
+    return ind1 == len1;
+
+  if (pattern[ind2] == '%') {
+    if (ind2 + 1 == len2)
+      return true;
+
+    if (pattern[ind2 + 1] == '%') {
+      return dfs(target, len1, ind1, 
+      pattern, len2, ind2 + 1, cntc, cntt - 1);
+    }
+    if (cntt == 1) {
+      if (ind1 + cntc > len1)
+        return false;
+
+      return dfs(target, len1, len1 - cntc, 
+      pattern, len2, ind2 + 1, cntc, cntt - 1);
+    }
+   
+    for (int i = 0; ind1 + i + cntc <= len1; i++) {
+      if ((pattern[ind2 + 1] == '_' || pattern[ind2 + 1] == target[ind1 + i]) 
+      && dfs(target, len1, ind1 + i, pattern, len2, ind2 + 1, cntc, cntt - 1)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  while (ind1 < len1 && ind2 < len2) {
+    if (pattern[ind2] == '%') 
+      return dfs(target, len1, ind1, pattern, len2, ind2, cntc, cntt);
+
+    if (pattern[ind2] == '_' || pattern[ind2] == target[ind1]) {
+      ind1++;
+      ind2++;
+      cntc--;
+    } else {
+      return false;
+    }
+  }
+  while (ind2 < len2 && pattern[ind2] == '%')
+    ind2++;
+
+  return ind1 == len1 && ind2 == len2;
+}
+int lcompare_string(void *arg1, int arg1_max_length, void *arg2, int arg2_max_length)
+{
+  const char *s1 = (const char *)arg1;
+  const char *s2 = (const char *)arg2;
+
+  int cntc = 0, cntt = 0;
+  for (int i = 0; i < arg2_max_length; i++) {
+    if (s2[i] == '%')
+      cntt++;
+    else
+      cntc++;
+  }
+
+  return dfs(s1, arg1_max_length, 0, 
+  s2, arg2_max_length, 0, cntc, cntt) ? 0 : 1;
+}
+
 int compare_int(void *arg1, void *arg2)
 {
   int v1 = *(int *)arg1;

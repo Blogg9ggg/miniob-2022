@@ -74,6 +74,14 @@ bool PredicateOperator::do_predicate(RowTuple &tuple)
     left_expr->get_value(tuple, left_cell);
     right_expr->get_value(tuple, right_cell);
 
+    if (comp == LIKE) {
+      // 李立基: 应该在之前的流程就保证 LIKE 的左右值都是 CHARS
+      const int compare = left_cell.lcompare(right_cell);
+      if (0 != compare) {
+        return false;
+      }
+      continue;
+    }
     const int compare = left_cell.compare(right_cell);
     bool filter_result = false;
     switch (comp) {

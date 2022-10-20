@@ -17,3 +17,6 @@ See the Mulan PSL v2 for more details. */
 int compare_int(void *arg1, void *arg2);
 int compare_float(void *arg1, void *arg2);
 int compare_string(void *arg1, int arg1_max_length, void *arg2, int arg2_max_length);
+
+int lcompare_string(void *arg1, int arg1_max_length, void *arg2, int arg2_max_length);
+bool dfs(const char *target, int len1, int ind1, const char *pattern, int len2, int ind2, int cntc, int cntt);
