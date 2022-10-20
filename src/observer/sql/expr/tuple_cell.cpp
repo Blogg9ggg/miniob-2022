@@ -17,6 +17,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/log/log.h"
 #include "util/comparator.h"
 #include "util/util.h"
+#include "math.h"
 
 void TupleCell::to_string(std::ostream &os) const
 {
@@ -38,12 +39,10 @@ void TupleCell::to_string(std::ostream &os) const
       if (data_[i] == '\0') {
         break;
       }
-      os << data_[i];
-    }
-  } break;
-  default: {
-    LOG_WARN("unsupported attr type: %d", attr_type_);
-  } break;
+    } break;
+    default: {
+      LOG_WARN("unsupported attr type: %d", attr_type_);
+    } break;
   }
 }
 
@@ -59,14 +58,11 @@ int TupleCell::compare(const TupleCell &other) const
     default: {
       LOG_WARN("unsupported type: %d", this->attr_type_);
     }
+    if (other.attr_type_ == FLOATS) {
+      float this_data = atof(this->data_);
+      return compare_float(&this_data, other.data_);
     }
-  } else if (this->attr_type_ == INTS && other.attr_type_ == FLOATS) {
-    float this_data = *(int *)data_;
-    return compare_float(&this_data, other.data_);
-  } else if (this->attr_type_ == FLOATS && other.attr_type_ == INTS) {
-    float other_data = *(int *)other.data_;
-    return compare_float(data_, &other_data);
   }
   LOG_WARN("not supported");
-  return -1; // TODO return rc?
+  return -1;  // TODO return rc?
 }

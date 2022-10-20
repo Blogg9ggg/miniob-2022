@@ -688,7 +688,7 @@ RC Table::update_record(Trx *trx, Record *old_record, Record *new_record)
 {
   RC rc = RC::SUCCESS;
 
-  rc = delete_entry_of_indexes(old_record->data(), old_record->rid(), false);  // 重复代码 refer to commit_delete
+  rc = delete_entry_of_indexes(old_record->data(), old_record->rid(), false);
   if (rc != RC::SUCCESS) {
     LOG_ERROR("Failed to delete indexes of record (rid=%d.%d). rc=%d:%s",
         old_record->rid().page_num,
@@ -714,6 +714,8 @@ RC Table::update_record(Trx *trx, Record *old_record, Record *new_record)
     insert_entry_of_indexes(old_record->data(), old_record->rid());
     return rc;
   }
+  // TODO: update 事务支持
+
   //  if (trx != nullptr) {
   //    rc = trx->delete_record(this, record);
   //
