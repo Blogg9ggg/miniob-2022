@@ -20,6 +20,7 @@ See the Mulan PSL v2 for more details. */
 #include "sql/stmt/update_stmt.h"
 #include "stmt.h"
 #include "math.h"
+#include "util/util.h"
 
 RC Stmt::create_stmt(Db *db, Query &query, Stmt *&stmt)
 {
@@ -57,7 +58,7 @@ RC Stmt::cast_value_to_field_type(Value *value, AttrType field_type)
       if (value_type == INTS) {
         new_data = std::to_string(*(int *)data).c_str();
       } else if (value_type == FLOATS) {
-        new_data = std::to_string(*(float *)data).c_str();
+        new_data = double2string(*(float *)data).c_str();
       } else {
         return RC::SCHEMA_FIELD_TYPE_MISMATCH;
       }
