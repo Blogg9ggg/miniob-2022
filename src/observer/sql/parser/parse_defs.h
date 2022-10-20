@@ -45,7 +45,8 @@ typedef enum
   UNDEFINED,
   CHARS,
   INTS,
-  FLOATS
+  FLOATS,
+  DATES
 } AttrType;
 
 //属性值
@@ -182,7 +183,8 @@ enum SqlCommandFlag {
   SCF_ROLLBACK,
   SCF_LOAD_DATA,
   SCF_HELP,
-  SCF_EXIT
+  SCF_EXIT,
+  SCF_INVALID_VALUE // 李立基: 標記不合法, 無效的 Value
 };
 // struct of flag and sql_struct
 typedef struct Query {

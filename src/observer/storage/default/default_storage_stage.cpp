@@ -252,9 +252,7 @@ RC insert_record_from_file(
         } else {
           value_init_integer(&record_values[i], int_value);
         }
-      }
-
-      break;
+      } break;
       case FLOATS: {
         deserialize_stream.clear();
         deserialize_stream.str(file_value);
@@ -271,6 +269,9 @@ RC insert_record_from_file(
       case CHARS: {
         value_init_string(&record_values[i], file_value.c_str());
       } break;
+      case DATES: {
+        // TODO
+      } 
       default: {
         errmsg << "Unsupported field type to loading: " << field->type();
         rc = RC::SCHEMA_FIELD_TYPE_MISMATCH;

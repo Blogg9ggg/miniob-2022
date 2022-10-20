@@ -25,6 +25,11 @@ void TupleCell::to_string(std::ostream &os) const
     case INTS: {
       os << *(int *)data_;
     } break;
+    // 李立基: 增加 DATE 字段
+    case DATES: {
+      int v = *(int *)data_;
+      os << date2string(v);
+    } break;
     case FLOATS: {
       float v = *(float *)data_;
       os << double2string(v);
@@ -34,12 +39,11 @@ void TupleCell::to_string(std::ostream &os) const
         if (data_[i] == '\0') {
           break;
         }
-        os << data_[i];
-      }
-    } break;
-    default: {
-      LOG_WARN("unsupported attr type: %d", attr_type_);
-    } break;
+      } break;
+      default: {
+        LOG_WARN("unsupported attr type: %d", attr_type_);
+      } break;
+    }
   }
 }
 
@@ -47,42 +51,18 @@ int TupleCell::compare(const TupleCell &other) const
 {
   if (this->attr_type_ == other.attr_type_) {
     switch (this->attr_type_) {
-      case INTS:
-        return compare_int(this->data_, other.data_);
-      case FLOATS:
-        return compare_float(this->data_, other.data_);
-      case CHARS:
-        return compare_string(this->data_, this->length_, other.data_, other.length_);
+      case INTS: return compare_int(this->data_, other.data_);
+      // 李立基: 增加 date 字段
+      case DATES: return compare_int(this->data_, other.data_);
+      case FLOATS: return compare_float(this->data_, other.data_);
+      case CHARS: return compare_string(this->data_, this->length_, other.data_, other.length_);
       default: {
         LOG_WARN("unsupported type: %d", this->attr_type_);
       }
-    }
-  } else if (this->attr_type_ == INTS) {
-    if (other.attr_type_ == FLOATS) {
-      float this_data = *(int *)data_;
-      return compare_float(&this_data, other.data_);
-    }
-    if (other.attr_type_ == CHARS) {
-      int other_data = (int)round(atof(other.data_));
-      return compare_int(this->data_, &other_data);
-    }
-  } else if (this->attr_type_ == FLOATS) {
-    if (other.attr_type_ == INTS) {
-      float other_data = *(int *)other.data_;
-      return compare_float(data_, &other_data);
-    }
-    if (other.attr_type_ == CHARS) {
-      float other_data = atof(other.data_);
-      return compare_float(this->data_, &other_data);
-    }
-  } else if (this->attr_type_ == CHARS) {
-    if (other.attr_type_ == INTS) {
-      int this_data = (int)round(atof(this->data_));
-      return compare_int(&this_data, other.data_);
-    }
-    if (other.attr_type_ == FLOATS) {
-      float this_data = atof(this->data_);
-      return compare_float(&this_data, other.data_);
+      if (other.attr_type_ == FLOATS) {
+        float this_data = atof(this->data_);
+        return compare_float(&this_data, other.data_);
+      }
     }
   }
   LOG_WARN("not supported");

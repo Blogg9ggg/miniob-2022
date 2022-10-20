@@ -83,6 +83,7 @@ ParserContext *get_context(yyscan_t scanner)
         INT_T
         STRING_T
         FLOAT_T
+		DATE_T
         HELP
         EXIT
         DOT //QUOTE
@@ -117,6 +118,7 @@ ParserContext *get_context(yyscan_t scanner)
 %token <floats> FLOAT 
 %token <string> ID
 %token <string> PATH
+%token <string> DATE_STR	// 李立基: 增加 DATE_STR token
 %token <string> SSS
 %token <string> STAR
 %token <string> STRING_V
@@ -278,6 +280,7 @@ type:
 	INT_T { $$=INTS; }
        | STRING_T { $$=CHARS; }
        | FLOAT_T { $$=FLOATS; }
+	   | DATE_T { $$=DATES; }
        ;
 ID_get:
 	ID 
@@ -317,6 +320,13 @@ value:
 		}
     |FLOAT{
   		value_init_float(&CONTEXT->values[CONTEXT->value_length++], $1);
+		}
+	|DATE_STR{ // 李立基: 初始化 date, 用 int 類型保存數據, 并且檢查日期是否合法, 不合法返回 SCF_INVALID_VALUE
+		$1 = substr($1,1,strlen($1)-2);
+		if (value_init_date(&CONTEXT->values[CONTEXT->value_length++], $1) == -1) {
+			CONTEXT->ssql->flag = SCF_INVALID_VALUE;
+			return -1;	// TODO: 這裏發現 date 不合法 return 推出 parse 函數, 由於目前沒有用到這個返回值, 故直接 return -1, 後期可以改.
+		}
 		}
     |SSS {
 			$1 = substr($1,1,strlen($1)-2);

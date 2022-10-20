@@ -130,7 +130,13 @@ RC ParseStage::handle_request(StageEvent *event)
   }
 
   RC ret = parse(sql.c_str(), query_result);
-  if (ret != RC::SUCCESS) {
+  // 李立基: 发现不合法数据就直接返回 FAILURE
+  if (ret == RC::INVALID_ARGUMENT) {
+    sql_event->session_event()->set_response("FAILURE\n");
+    query_destroy(query_result);
+    return RC::INTERNAL;
+  }
+  else if (ret != RC::SUCCESS) {
     // set error information to event
     sql_event->session_event()->set_response("Failed to parse sql\n");
     query_destroy(query_result);
