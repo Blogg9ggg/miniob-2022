@@ -46,8 +46,10 @@ public:
     switch (attr_type_) {
     case INTS: {
       return compare_int((void *)v1, (void *)v2);
-    }
-      break;
+    } break;
+    case DATES: { // 李立基: 增加 date 字段
+      return compare_int((void *)v1, (void *)v2);
+    } break;
     case FLOATS: {
       return compare_float((void *)v1, (void *)v2);
     }
@@ -110,17 +112,20 @@ public:
     case INTS: {
       return std::to_string(*(int*)v);
     }
-      break;
+    case DATES: {
+      // TODO: 是这样写吗?
+      return std::to_string(*(int*)v);
+    }
     case FLOATS: {
       return std::to_string(*(float*)v);
     }
     case CHARS: {
       std::string str;
       for (int i = 0; i < attr_length_; i++) {
-	if (v[i] == 0) {
-	  break;
-	}
-	str.push_back(v[i]);
+        if (v[i] == 0) {
+          break;
+        }
+	      str.push_back(v[i]);
       }
       return str;
     }

@@ -13,8 +13,20 @@ See the Mulan PSL v2 for more details. */
 //
 
 #include <string.h>
+#include <sstream>
+#include <iomanip>
+
 #include "util/util.h"
 
+std::string date2string(int v)
+{
+  std::stringstream ss;
+  ss << std::setw(4) << std::setfill('0') << (v / 10000) << "-"
+  << std::setw(2) << std::setfill('0') << (v / 100 % 100) << "-"
+  << std::setw(2) << std::setfill('0') << (v % 100);
+
+  return ss.str();
+}
 std::string double2string(double v)
 {
   char buf[256];

@@ -24,6 +24,11 @@ void TupleCell::to_string(std::ostream &os) const
   case INTS: {
     os << *(int *)data_;
   } break;
+  // 李立基: 增加 DATE 字段
+  case DATES: {
+    int v = *(int *)data_;
+    os << date2string(v);
+  } break;
   case FLOATS: {
     float v = *(float *)data_;
     os << double2string(v);
@@ -47,6 +52,8 @@ int TupleCell::compare(const TupleCell &other) const
   if (this->attr_type_ == other.attr_type_) {
     switch (this->attr_type_) {
     case INTS: return compare_int(this->data_, other.data_);
+    // 李立基: 增加 date 字段
+    case DATES: return compare_int(this->data_, other.data_);
     case FLOATS: return compare_float(this->data_, other.data_);
     case CHARS: return compare_string(this->data_, this->length_, other.data_, other.length_);
     default: {
