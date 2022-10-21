@@ -70,33 +70,40 @@ int TupleCell::compare(const TupleCell &other) const
         LOG_WARN("unsupported type: %d", this->attr_type_);
       }
     }
-  } else if (this->attr_type_ == INTS) {
-    if (other.attr_type_ == FLOATS) {
-      float this_data = *(int *)data_;
-      return compare_float(&this_data, other.data_);
+  } else {
+    float this_data;
+    switch (this->attr_type_) {
+      case INTS:
+        this_data = *(int *)data_;
+        break;
+      case CHARS:
+        this_data = atof(this->data_);
+        break;
+      case FLOATS:
+        this_data = *(float *)this->data_;
+        break;
+      default: {
+        LOG_WARN("unsupported type: %d", this->attr_type_);
+        return -1;
+      }
     }
-    if (other.attr_type_ == CHARS) {
-      int other_data = (int)round(atof(other.data_));
-      return compare_int(this->data_, &other_data);
+    float other_data;
+    switch (other.attr_type_) {
+      case INTS:
+        other_data = *(int *)other.data_;
+        break;
+      case CHARS:
+        other_data = atof(other.data_);
+        break;
+      case FLOATS:
+        other_data = *(float *)other.data_;
+        break;
+      default: {
+        LOG_WARN("unsupported type: %d", this->attr_type_);
+        return -1;
+      }
     }
-  } else if (this->attr_type_ == FLOATS) {
-    if (other.attr_type_ == INTS) {
-      float other_data = *(int *)other.data_;
-      return compare_float(data_, &other_data);
-    }
-    if (other.attr_type_ == CHARS) {
-      float other_data = atof(other.data_);
-      return compare_float(this->data_, &other_data);
-    }
-  } else if (this->attr_type_ == CHARS) {
-    if (other.attr_type_ == INTS) {
-      int this_data = (int)round(atof(this->data_));
-      return compare_int(&this_data, other.data_);
-    }
-    if (other.attr_type_ == FLOATS) {
-      float this_data = atof(this->data_);
-      return compare_float(&this_data, other.data_);
-    }
+    return compare_float(&this_data,&other_data);
   }
   LOG_WARN("not supported");
   return -1;  // TODO return rc?
