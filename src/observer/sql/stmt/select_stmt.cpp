@@ -133,6 +133,7 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
   FilterStmt *filter_stmt = nullptr;
   RC rc = FilterStmt::create(db, default_table, &table_map,
            select_sql.conditions, select_sql.condition_num, filter_stmt);
+  LOG_INFO("FilterStmt.create: condition_num = %d\n", select_sql.condition_num);
   if (rc != RC::SUCCESS) {
     LOG_WARN("cannot construct filter stmt");
     return rc;
