@@ -15,6 +15,8 @@ See the Mulan PSL v2 for more details. */
 #include <string.h>
 #include <algorithm>
 
+#include "common/log/log.h"
+
 const double epsilon = 1E-6;
 
 /*
@@ -70,21 +72,23 @@ bool dfs(const char *target, int len1, int ind1,
 
   return ind1 == len1 && ind2 == len2;
 }
-int lcompare_string(void *arg1, int arg1_max_length, void *arg2, int arg2_max_length)
+int lcompare_string(void *arg1, void *arg2)
 {
   const char *s1 = (const char *)arg1;
   const char *s2 = (const char *)arg2;
+  int len1 = strlen(s1);
+  int len2 = strlen(s2);
 
+  LOG_INFO("s1(%d) = %s, s2(%d) = %s\n", len1, s1, len2, s2);
   int cntc = 0, cntt = 0;
-  for (int i = 0; i < arg2_max_length; i++) {
+  for (int i = 0; i < len2; i++) {
     if (s2[i] == '%')
       cntt++;
     else
       cntc++;
   }
 
-  return dfs(s1, arg1_max_length, 0, 
-  s2, arg2_max_length, 0, cntc, cntt) ? 0 : 1;
+  return dfs(s1, len1, 0, s2, len2, 0, cntc, cntt) ? 0 : 1;
 }
 
 int compare_int(void *arg1, void *arg2)

@@ -77,6 +77,7 @@ bool PredicateOperator::do_predicate(RowTuple &tuple)
     if (comp == LIKE) {
       // 李立基: 应该在之前的流程就保证 LIKE 的左右值都是 CHARS
       const int compare = left_cell.lcompare(right_cell);
+      LOG_INFO("%s like %s = %d\n", left_cell.data(), right_cell.data(), compare);
       if (0 != compare) {
         return false;
       }

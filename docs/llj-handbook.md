@@ -36,5 +36,15 @@
 
    
 
-4. show index 进度
-yacc_sql.y, parse.cpp, parse_defs.h
+4. like 测试
+
+  ```
+  create table like_table(id int, name char);
+  insert into like_table values(1, 'apple');
+  insert into like_table values(11, 'pineapple');
+  select * from like_table;
+  ```
+
+  
+
+5. 123

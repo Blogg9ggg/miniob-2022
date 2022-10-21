@@ -56,6 +56,7 @@ void value_init_string(Value *value, const char *v)
 {
   value->type = CHARS;
   value->data = strdup(v);
+  LOG_INFO("chars value: %s\n", value->data);
 }
 /*
  * 作者: 李立基

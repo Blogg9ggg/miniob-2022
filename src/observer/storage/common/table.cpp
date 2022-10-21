@@ -383,6 +383,7 @@ RC Table::make_record(int value_num, const Value *values, char *&record_out)
   for (int i = 0; i < value_num; i++) {
     const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
     const Value &value = values[i];
+    LOG_INFO("type: %d, value: %s\n", value.type, value.data);
     if (field->type() != value.type) {
       LOG_ERROR("Invalid value type. table name =%s, field name=%s, type=%d, but given=%d",
           table_meta_.name(),
@@ -402,13 +403,30 @@ RC Table::make_record(int value_num, const Value *values, char *&record_out)
     const Value &value = values[i];
     size_t copy_len = field->len();
     if (field->type() == CHARS) {
+      // 李立基: 修改 CHARS 的存储形式
       const size_t data_len = strlen((const char *)value.data);
-      if (copy_len > data_len) {
-        copy_len = data_len + 1;
+      LOG_INFO("offset = %d\n", field->offset());
+      if (data_len + 1 <= copy_len) {
+        memcpy(record + field->offset(), value.data, data_len + 1);
+      } else {
+        // TODO: 长度 > 12 的字符串还没处理好, 还得修改 dist buffer pool 层, 后面写 text 的时候一起写.
+        char *ptr = (char *)malloc(data_len + 1);
+        memcpy(ptr, value.data, data_len + 1);
+        *(int64_t *)(record + field->offset()) = (int64_t)ptr;
+	      *(int32_t *)(record + field->offset() + 8) = 0xffffffff;
       }
+    } else {
+      memcpy(record + field->offset(), value.data, copy_len);
     }
-    memcpy(record + field->offset(), value.data, copy_len);
+    
   }
+
+  // for (int i = 0; i < value_num; i++) {
+  //   const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
+  //   if (field->type() == CHARS) {
+  //     LOG_INFO("CHARS field: record = %s\n", (const char *)(record + field->offset()));
+  //   }
+  // }
 
   record_out = record;
   return RC::SUCCESS;
