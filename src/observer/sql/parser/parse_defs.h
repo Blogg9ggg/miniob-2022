@@ -51,6 +51,13 @@ typedef enum
   DATES
 } AttrType;
 
+//聚合函数类型
+typedef enum
+{
+  NO_FUN,
+  MAX_FUN
+} AggrType;
+
 //属性值
 typedef struct _Value {
   AttrType type;  // type of value
@@ -71,6 +78,7 @@ typedef struct _Condition {
 
 // struct of select
 typedef struct {
+  int aggr_type;         // 李立基: 标记聚合函数类型
   size_t attr_num;                // Length of attrs in Select clause
   RelAttr attributes[MAX_NUM];    // attrs in Select clause
   size_t relation_num;            // Length of relations in Fro clause
@@ -186,7 +194,8 @@ enum SqlCommandFlag {
   SCF_LOAD_DATA,
   SCF_HELP,
   SCF_EXIT,
-  SCF_INVALID_VALUE // 李立基: 標記不合法, 無效的 Value
+  SCF_INVALID_VALUE, // 李立基: 標記不合法, 無效的 Value
+  SCF_INVALID_ATTR   // 李立基: 标记不合法的 attribution
 };
 // struct of flag and sql_struct
 typedef struct Query {

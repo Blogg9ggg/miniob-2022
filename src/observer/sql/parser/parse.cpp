@@ -159,6 +159,8 @@ void selects_append_conditions(Selects *selects, Condition conditions[], size_t 
 
 void selects_destroy(Selects *selects)
 {
+  selects->aggr_type = NO_FUN;
+  
   for (size_t i = 0; i < selects->attr_num; i++) {
     relation_attr_destroy(&selects->attributes[i]);
   }

@@ -74,9 +74,13 @@ QUOTE            [\'\"]
 [Ii][Nn][Ff][Ii][Ll][Ee]                             RETURN_TOKEN(INFILE);
 [Nn][Oo][Tt]                                         RETURN_TOKEN(NOT);
 [Ll][Ii][Kk][Ee]                                     RETURN_TOKEN(LK);  // 李立基: 增加 LIKE 关键字
+[Mm][Aa][Xx]                                         RETURN_TOKEN(MAX); // 李立基: 增加 MAX 关键字
+
 {ID}                                                 yylval->string=strdup(yytext); RETURN_TOKEN(ID);
 "("                                                  RETURN_TOKEN(LBRACE);
 ")"                                                  RETURN_TOKEN(RBRACE);
+
+
 
 ","                                                  RETURN_TOKEN(COMMA);
 "="                                                  RETURN_TOKEN(EQ);

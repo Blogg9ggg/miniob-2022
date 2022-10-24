@@ -147,6 +147,7 @@ RC Table::destroy(const char* dir) {
     //     return RC::GENERIC_ERROR;
     // }
 
+    // TODO
     // const int index_num = table_meta_.index_num();
     // for (int i = 0; i < index_num; i++) {  // 清理所有的索引相关文件数据与索引元数据
     //     ((BplusTreeIndex*)indexes_[i])->close();
@@ -940,6 +941,10 @@ Index *Table::find_index_by_field(const char *field_name) const
   return nullptr;
 }
 
+/*
+ * 作者: 李立基
+ * 说明: 返回 indexes_
+ */
 std::vector<Index *> *Table::indexes()
 {
   return &indexes_;

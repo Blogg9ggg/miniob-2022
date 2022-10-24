@@ -25,6 +25,12 @@ class FilterStmt;
 class Db;
 class Table;
 
+typedef enum
+{
+  no_fun,
+  max_fun
+} aggregation_fun;
+
 class SelectStmt : public Stmt
 {
 public:
@@ -40,8 +46,10 @@ public:
   const std::vector<Table *> &tables() const { return tables_; }
   const std::vector<Field> &query_fields() const { return query_fields_; }
   FilterStmt *filter_stmt() const { return filter_stmt_; }
+  int aggr_fun() const { return aggr_fun_; }
 
 private:
+  int aggr_fun_;  // 李立基: 加入指示使用什么聚合函数的字段
   std::vector<Field> query_fields_;
   std::vector<Table *> tables_;
   FilterStmt *filter_stmt_ = nullptr;

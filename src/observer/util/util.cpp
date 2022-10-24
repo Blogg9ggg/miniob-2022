@@ -18,6 +18,10 @@ See the Mulan PSL v2 for more details. */
 
 #include "util/util.h"
 
+/*
+ * 作者: 李立基
+ * 说明: date 数据转字符串
+ */
 std::string date2string(int v)
 {
   std::stringstream ss;

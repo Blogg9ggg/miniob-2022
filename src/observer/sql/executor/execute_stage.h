@@ -17,6 +17,7 @@ See the Mulan PSL v2 for more details. */
 
 #include "common/seda/stage.h"
 #include "sql/parser/parse.h"
+#include "sql/operator/project_operator.h"
 #include "rc.h"
 
 class SQLStageEvent;
@@ -53,6 +54,7 @@ protected:
   RC do_clog_sync(SQLStageEvent *sql_event);
 
   RC do_show_index(SQLStageEvent *sql_event);
+  // RC do_max_aggregation_fun(std::ostream &os, SelectStmt *select_stmt, const ProjectOperator &operator);
 
 protected:
 private:

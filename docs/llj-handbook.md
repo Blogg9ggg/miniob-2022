@@ -42,9 +42,47 @@
   create table like_table(id int, name char);
   insert into like_table values(1, 'apple');
   insert into like_table values(11, 'pineapple');
-  select * from like_table;
+  insert into like_table values(2, 'orange');
+  insert into like_table values(6, 'grape');
+  
+  insert into like_table values(10, 'cherry');
+  insert into like_table values(4, 'lemon');
+  insert into like_table values(7, 'coconut');
+  insert into like_table values(9, 'fig');
+  
+  select * from like_table where name like '%e';
+  SELECT * FROM like_table WHERE name LIKE '%pp%';
+  
+  SELECT * FROM like_table WHERE name NOT LIKE '%a%';
+  
+  SELECT * FROM like_table WHERE name NOT LIKE 'p%' AND name NOT LIKE '%e';
+  
+  create table t(s1 char, s2 char, s3 char);
+  insert into t values('aaaa', 'bbbbbbbbbb', 'dd');
   ```
 
   
 
-5. 123
+5. basic 测试
+
+  ```
+  create table basic_table(id int, age int, name char);
+  insert into basic_table values(1, 1, 'A');
+  insert into basic_table values(2, 2, 'B');
+  insert into basic_table values(3, 3, 'D');
+  SELECT * FROM basic_table;
+  
+  create table basic_table2(id int, age int, name char);
+  insert into basic_table2 values(1, 1, 'A');
+  insert into basic_table2 values(2, 2, 'B');
+  insert into basic_table2 values(3, 3, 'D');
+  insert into basic_table2 values(4, 4, 'E');
+  
+  delete from basic_table2 where name='B';
+  delete from basic_table2 where name='E';
+  SELECT * FROM basic_table2;
+  ```
+
+  
+
+6. 123

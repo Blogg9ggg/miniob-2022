@@ -234,6 +234,23 @@ void end_trx_if_need(Session *session, Trx *trx, bool all_right)
   }
 }
 
+void print_tuple_header(std::ostream &os, const ProjectOperator &oper, const char *aggr_func_name)
+{
+  const int cell_num = oper.tuple_cell_num();
+  if (cell_num != 1) {
+    // TODO: 保证有且仅有一个字段
+  }
+
+  const TupleCellSpec *cell_spec = nullptr;
+  oper.tuple_cell_spec_at(0, cell_spec);
+  if (cell_spec->alias()) {
+    os << aggr_func_name << "(" << cell_spec->alias() << ")";
+  }
+
+  if (cell_num > 0) {
+    os << '\n';
+  }
+}
 void print_tuple_header(std::ostream &os, const ProjectOperator &oper)
 {
   const int cell_num = oper.tuple_cell_num();
@@ -415,6 +432,73 @@ IndexScanOperator *try_to_create_index_scan_operator(FilterStmt *filter_stmt)
   LOG_INFO("use index for scan: %s in table %s", index->index_meta().name(), table->name());
   return oper;
 }
+/*
+ * 作者: 李立基
+ * 说明: 聚合函数版本的打印头
+ */
+// RC print_tuple_header(std::ostream &os, const ProjectOperator &oper, int aggr_func_type)
+// {
+
+//   const int cell_num = oper.tuple_cell_num();
+//   if (cell_num != 1) {
+//     os << "FAILURE\n";
+//     return RC::UNIMPLENMENT;
+//   }
+
+//   const TupleCellSpec *cell_spec = nullptr;
+//   oper.tuple_cell_spec_at(0, cell_spec);
+  
+//   if (aggr_func_type == aggregation_fun::max_fun) {
+//     os << "MAX(";
+//     if (cell_spec->alias()) {
+//       os << cell_spec->alias();
+//     } os << ")\n";
+//   }
+  
+// }
+/*
+ * 作者: 李立基
+ * 说明: 处理 max 聚合函数
+ */
+// RC ExecuteStage::do_max_aggregation_fun(std::ostream &os, SelectStmt *select_stmt, 
+//                                         const ProjectOperator &operator)
+// {
+//   if (select_stmt->query_fields.size() != 1) {
+//     return RC::UNIMPLENMENT;
+//   }
+//   // Field *field = select_stmt->query_fields[0];
+//   print_tuple_header(ss, project_oper);
+
+//   return RC::UNIMPLENMENT;
+//   // ========================================================
+
+//   RC rc = print_tuple_header(os, *operator, aggregation_fun::max_fun);
+//   if (rc != RC::SUCCESS) {
+//     return rc;
+//   }
+
+//   rc = project_oper.next();
+//   Tuple *now_tuple = project_oper.current_tuple();
+//   now_tuple->find_cell()
+//   if (rc != RC::SUCCESS) {
+    
+//   }
+//   while ((rc = project_oper.next()) == RC::SUCCESS) {
+//     // get current record
+//     // write to response
+//     Tuple *tuple = project_oper.current_tuple();
+//     if (nullptr == tuple) {
+//       rc = RC::INTERNAL;
+//       LOG_WARN("failed to get current record. rc=%s", strrc(rc));
+//       break;
+//     }
+
+//     tuple_to_string(ss, *tuple);
+//     ss << std::endl;
+//   }
+
+//   return RC::SUCCESS;
+// }
 
 RC ExecuteStage::do_select(SQLStageEvent *sql_event)
 {
@@ -448,28 +532,85 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
   }
 
   std::stringstream ss;
-  print_tuple_header(ss, project_oper);
-  while ((rc = project_oper.next()) == RC::SUCCESS) {
-    // get current record
-    // write to response
-    Tuple *tuple = project_oper.current_tuple();
-    if (nullptr == tuple) {
-      rc = RC::INTERNAL;
-      LOG_WARN("failed to get current record. rc=%s", strrc(rc));
+  switch (select_stmt->aggr_fun())
+  {
+  case aggregation_fun::max_fun: {
+    // rc =  do_max_aggregation_fun(ss, select_stmt, project_oper);
+    print_tuple_header(ss, project_oper, "MAX");
+
+    rc = project_oper.next();
+    if (rc == RC::RECORD_EOF) {
+      break;
+    } else if (rc != RC::SUCCESS) {
+      LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
       break;
     }
 
-    tuple_to_string(ss, *tuple);
-    ss << std::endl;
-  }
+    Tuple *tuple = project_oper.current_tuple();
+    TupleCell max_cell, cell; 
+    if ((rc = tuple->cell_at(0, max_cell)) != RC::SUCCESS) {
+      LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
+      break; 
+    }
+    if (max_cell.attr_type() != AttrType::INTS && max_cell.attr_type() != AttrType::FLOATS) {
+      LOG_WARN("invalid type for max().");
+      break;
+    }
 
-  if (rc != RC::RECORD_EOF) {
-    LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
-    project_oper.close();
-  } else {
+    while ((rc = project_oper.next()) == RC::SUCCESS) {
+      // get current record
+      // write to response
+      tuple = project_oper.current_tuple();
+      if (nullptr == tuple) {
+        rc = RC::INTERNAL;
+        LOG_WARN("failed to get current record. rc=%s", strrc(rc));
+        break;
+      }
+
+      if ((rc = tuple->cell_at(0, cell)) != RC::SUCCESS) {
+        LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
+        break; 
+      }
+
+      if (cell.compare(max_cell) > 0) {
+        max_cell = cell; // TODO: 考虑好内存问题
+      }
+    }
+    if (rc != RC::RECORD_EOF) {
+      LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
+    }
+    
+    max_cell.to_string(ss);
+    ss << std::endl;
+    session_event->set_response(ss.str());
     rc = project_oper.close();
+  } break;
+
+  default: {
+    print_tuple_header(ss, project_oper);
+    while ((rc = project_oper.next()) == RC::SUCCESS) {
+      // get current record
+      // write to response
+      Tuple *tuple = project_oper.current_tuple();
+      if (nullptr == tuple) {
+        rc = RC::INTERNAL;
+        LOG_WARN("failed to get current record. rc=%s", strrc(rc));
+        break;
+      }
+
+      tuple_to_string(ss, *tuple);
+      ss << std::endl;
+    }
+
+    if (rc != RC::RECORD_EOF) {
+      LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
+    } 
+
+    session_event->set_response(ss.str());
+    rc = project_oper.close();
+  } break;
   }
-  session_event->set_response(ss.str());
+  
   return rc;
 }
 

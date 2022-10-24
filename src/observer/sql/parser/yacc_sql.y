@@ -9,6 +9,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+int yydebug=1;
 
 typedef struct ParserContext {
   Query * ssql;
@@ -118,6 +119,7 @@ ParserContext *get_context(yyscan_t scanner)
 
 %token <number> NUMBER
 %token <floats> FLOAT 
+%token <string> MAX
 %token <string> ID
 %token <string> PATH
 %token <string> DATE_STR	// 李立基: 增加 DATE_STR token
@@ -383,11 +385,18 @@ select:				/*  select 语句的语法解析树*/
 	;
 
 select_attr:
-    STAR {  
-			RelAttr attr;
-			relation_attr_init(&attr, NULL, "*");
-			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-		}
+	MAX LBRACE ID RBRACE {
+		RelAttr attr;
+		relation_attr_init(&attr, NULL, $3);
+		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+		// yyerror(scanner, "ju he12");
+		CONTEXT->ssql->sstr.selection.aggr_type = MAX_FUN;
+	}
+  | STAR {  
+		RelAttr attr;
+		relation_attr_init(&attr, NULL, "*");
+		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+	}
 	| STAR attr_list {
 			RelAttr attr;
 			relation_attr_init(&attr, NULL, "*");
@@ -403,6 +412,12 @@ select_attr:
 			relation_attr_init(&attr, $1, $3);
 			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
 		}
+		//| aggr_func attr_list {
+			// 李立基: 不支持聚合函数与单个字段混合
+		//	yyerror(scanner, "ju he12");
+		//	CONTEXT->ssql->flag = SCF_ERROR;
+		//	return -1;
+		//}
     ;
 attr_list:
     /* empty */
@@ -420,8 +435,24 @@ attr_list:
         // CONTEXT->ssql->sstr.selection.attributes[CONTEXT->select_length].attribute_name=$4;
         // CONTEXT->ssql->sstr.selection.attributes[CONTEXT->select_length++].relation_name=$2;
   	  }
+		| COMMA aggr_func {
+			// 李立基: 不支持聚合函数与单个字段混合
+			CONTEXT->ssql->flag = SCF_ERROR;
+			return -1;
+		}
   	;
+aggr_func:
+    MAX LBRACE ID RBRACE {
+			RelAttr attr;
+			relation_attr_init(&attr, NULL, $3);
+			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+			printf("ju he?");
+			CONTEXT->ssql->sstr.selection.aggr_type = MAX_FUN;
+		}
+		MAX LBRACE ID DOT ID RBRACE {
 
+		}
+		;
 rel_list:
     /* empty */
     | COMMA ID rel_list {	
