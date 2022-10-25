@@ -622,7 +622,8 @@ RC do_aggr_func_avg(std::ostream &os, ProjectOperator &project_oper)
   RC rc = RC::SUCCESS;
   print_tuple_header(os, project_oper, "AVG");
 
-  float ans = 0, cnt = 0;
+  float ans = 0;
+  int cnt = 0;
   rc = project_oper.next();
   if (rc == RC::RECORD_EOF) {
     os << "0" << std::endl;
@@ -673,8 +674,11 @@ RC do_aggr_func_avg(std::ostream &os, ProjectOperator &project_oper)
     LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
   }
   
-  
-  os << std::fixed << std::setprecision(2) << ans/cnt << std::endl;
+  if (attr_type == AttrType::INTS && ((int)ans % cnt == 0)) {
+    os << (int)ans / cnt << std::endl;
+  } else {
+    os << std::fixed << std::setprecision(2) << ans/cnt << std::endl;
+  }
   
   rc = project_oper.close();
 
