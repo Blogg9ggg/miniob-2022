@@ -457,10 +457,6 @@ RC do_aggr_func_max(std::ostream &os, ProjectOperator &project_oper)
     LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
     return rc;
   }
-  if (max_cell.attr_type() != AttrType::INTS && max_cell.attr_type() != AttrType::FLOATS) {
-    LOG_WARN("invalid type for max().");
-    return rc;
-  }
 
   while ((rc = project_oper.next()) == RC::SUCCESS) {
     // get current record
@@ -513,10 +509,6 @@ RC do_aggr_func_min(std::ostream &os, ProjectOperator &project_oper)
   TupleCell min_cell, cell; 
   if ((rc = tuple->cell_at(0, min_cell)) != RC::SUCCESS) {
     LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
-    return rc;
-  }
-  if (min_cell.attr_type() != AttrType::INTS && min_cell.attr_type() != AttrType::FLOATS) {
-    LOG_WARN("invalid type for min().");
     return rc;
   }
 
@@ -678,6 +670,7 @@ RC do_aggr_func_avg(std::ostream &os, ProjectOperator &project_oper)
   if (rc != RC::RECORD_EOF) {
     LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
   }
+  
   
   os << std::fixed << std::setprecision(2) << ans/cnt << std::endl;
   
