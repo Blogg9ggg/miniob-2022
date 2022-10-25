@@ -129,7 +129,8 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
         // TODO: count 只要 count name
         Table *table = tables[0];
         std::string count_name = aggregation_func.attribute.attribute_name;
-        if (nullptr == table->table_meta().field(count_name.c_str())) {
+        if ((count_name != "*" && count_name != "1") && 
+        nullptr == table->table_meta().field(count_name.c_str())) {
           return RC::INVALID_ARGUMENT;
         }
         aggr_funcs_t.push_back(AggrFuncCXX(aggregation_fun::count_fun, count_name));
