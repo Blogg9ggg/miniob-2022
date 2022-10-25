@@ -93,30 +93,45 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
         Table *table = tables[0];
         const char *field_name = aggregation_func.attribute.attribute_name;
         const FieldMeta *field_meta = table->table_meta().field(field_name);
+        if (nullptr == field_meta) {
+          return RC::INVALID_ARGUMENT;
+        }
         aggr_funcs_t.push_back(AggrFuncCXX(aggregation_fun::max_fun, Field(table, field_meta)));
       } break;
       case aggregation_fun::min_fun: {
         Table *table = tables[0];
         const char *field_name = aggregation_func.attribute.attribute_name;
         const FieldMeta *field_meta = table->table_meta().field(field_name);
+        if (nullptr == field_meta) {
+          return RC::INVALID_ARGUMENT;
+        }
         aggr_funcs_t.push_back(AggrFuncCXX(aggregation_fun::min_fun, Field(table, field_meta)));
       } break;
       case aggregation_fun::avg_fun: {
         Table *table = tables[0];
         const char *field_name = aggregation_func.attribute.attribute_name;
         const FieldMeta *field_meta = table->table_meta().field(field_name);
+        if (nullptr == field_meta) {
+          return RC::INVALID_ARGUMENT;
+        }
         aggr_funcs_t.push_back(AggrFuncCXX(aggregation_fun::avg_fun, Field(table, field_meta)));
       } break;
       case aggregation_fun::sum_fun: {
         Table *table = tables[0];
         const char *field_name = aggregation_func.attribute.attribute_name;
         const FieldMeta *field_meta = table->table_meta().field(field_name);
+        if (nullptr == field_meta) {
+          return RC::INVALID_ARGUMENT;
+        }
         aggr_funcs_t.push_back(AggrFuncCXX(aggregation_fun::sum_fun, Field(table, field_meta)));
       } break;
       case aggregation_fun::count_fun: {
         // TODO: count 只要 count name
         Table *table = tables[0];
         std::string count_name = aggregation_func.attribute.attribute_name;
+        if (nullptr == table->table_meta().field(count_name.c_str())) {
+          return RC::INVALID_ARGUMENT;
+        }
         aggr_funcs_t.push_back(AggrFuncCXX(aggregation_fun::count_fun, count_name));
       } break;
       
