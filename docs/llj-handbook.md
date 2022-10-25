@@ -88,11 +88,13 @@
 6. 聚合函数测试
 
 ```
-create table aggr_table(id int, score float, name char);
-insert into aggr_table values(11, 11, 'A');
-insert into aggr_table values(10, 10, 'B');
+create table aggr_table(id int, score float, name char, day date);
+insert into aggr_table values(11, 11, 'A', '2020-10-25');
+insert into aggr_table values(10, 10, 'B', '2020-10-26');
 
 select MAX(id) from aggr_table;
+select MAX(day) from aggr_table;
+select MIN(day) from aggr_table;
 select MIN(id) from aggr_table;
 select COUNT(1) from aggr_table;
 select COUNT(*) from aggr_table;
