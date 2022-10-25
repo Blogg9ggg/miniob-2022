@@ -458,6 +458,8 @@ RC parse(const char *st, Query *sqln)
   LOG_INFO("flag = %d\n", sqln->flag);
   if (sqln->flag == SCF_INVALID_VALUE)
     return INVALID_ARGUMENT;
+  else if (sqln->flag == SCF_INVALID_ATTR)
+    return INVALID_ARGUMENT;    // TODO: 返回的报错字段可以更精细一些
   else if (sqln->flag == SCF_ERROR)
     return SQL_SYNTAX;
   else

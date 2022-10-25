@@ -14,6 +14,7 @@ See the Mulan PSL v2 for more details. */
 
 #include <string>
 #include <sstream>
+#include <iomanip>
 
 #include "execute_stage.h"
 
@@ -432,73 +433,290 @@ IndexScanOperator *try_to_create_index_scan_operator(FilterStmt *filter_stmt)
   LOG_INFO("use index for scan: %s in table %s", index->index_meta().name(), table->name());
   return oper;
 }
-/*
- * 作者: 李立基
- * 说明: 聚合函数版本的打印头
- */
-// RC print_tuple_header(std::ostream &os, const ProjectOperator &oper, int aggr_func_type)
-// {
 
-//   const int cell_num = oper.tuple_cell_num();
-//   if (cell_num != 1) {
-//     os << "FAILURE\n";
-//     return RC::UNIMPLENMENT;
-//   }
-
-//   const TupleCellSpec *cell_spec = nullptr;
-//   oper.tuple_cell_spec_at(0, cell_spec);
-  
-//   if (aggr_func_type == aggregation_fun::max_fun) {
-//     os << "MAX(";
-//     if (cell_spec->alias()) {
-//       os << cell_spec->alias();
-//     } os << ")\n";
-//   }
-  
-// }
 /*
  * 作者: 李立基
  * 说明: 处理 max 聚合函数
  */
-// RC ExecuteStage::do_max_aggregation_fun(std::ostream &os, SelectStmt *select_stmt, 
-//                                         const ProjectOperator &operator)
-// {
-//   if (select_stmt->query_fields.size() != 1) {
-//     return RC::UNIMPLENMENT;
-//   }
-//   // Field *field = select_stmt->query_fields[0];
-//   print_tuple_header(ss, project_oper);
+RC do_aggr_func_max(std::ostream &os, ProjectOperator &project_oper)
+{
+  RC rc = RC::SUCCESS;
+  print_tuple_header(os, project_oper, "MAX");
 
-//   return RC::UNIMPLENMENT;
-//   // ========================================================
+  rc = project_oper.next();
+  if (rc == RC::RECORD_EOF) {
+    return rc;
+  } else if (rc != RC::SUCCESS) {
+    LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
+    return rc;
+  }
 
-//   RC rc = print_tuple_header(os, *operator, aggregation_fun::max_fun);
-//   if (rc != RC::SUCCESS) {
-//     return rc;
-//   }
+  Tuple *tuple = project_oper.current_tuple();
+  TupleCell max_cell, cell; 
+  if ((rc = tuple->cell_at(0, max_cell)) != RC::SUCCESS) {
+    LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
+    return rc;
+  }
+  if (max_cell.attr_type() != AttrType::INTS && max_cell.attr_type() != AttrType::FLOATS) {
+    LOG_WARN("invalid type for max().");
+    return rc;
+  }
 
-//   rc = project_oper.next();
-//   Tuple *now_tuple = project_oper.current_tuple();
-//   now_tuple->find_cell()
-//   if (rc != RC::SUCCESS) {
-    
-//   }
-//   while ((rc = project_oper.next()) == RC::SUCCESS) {
-//     // get current record
-//     // write to response
-//     Tuple *tuple = project_oper.current_tuple();
-//     if (nullptr == tuple) {
-//       rc = RC::INTERNAL;
-//       LOG_WARN("failed to get current record. rc=%s", strrc(rc));
-//       break;
-//     }
+  while ((rc = project_oper.next()) == RC::SUCCESS) {
+    // get current record
+    // write to response
+    tuple = project_oper.current_tuple();
+    if (nullptr == tuple) {
+      rc = RC::INTERNAL;
+      LOG_WARN("failed to get current record. rc=%s", strrc(rc));
+      return rc;
+    }
 
-//     tuple_to_string(ss, *tuple);
-//     ss << std::endl;
-//   }
+    if ((rc = tuple->cell_at(0, cell)) != RC::SUCCESS) {
+      LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
+      return rc;
+    }
 
-//   return RC::SUCCESS;
-// }
+    if (cell.compare(max_cell) > 0) {
+      max_cell = cell; // TODO: 考虑好内存问题
+    }
+  }
+  if (rc != RC::RECORD_EOF) {
+    LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
+  }
+  
+  max_cell.to_string(os);
+  os << std::endl;
+  rc = project_oper.close();
+
+  return rc;
+}
+
+/*
+ * 作者: 李立基
+ * 说明: 处理 min 聚合函数
+ */
+RC do_aggr_func_min(std::ostream &os, ProjectOperator &project_oper)
+{
+  RC rc = RC::SUCCESS;
+  print_tuple_header(os, project_oper, "MIN");
+
+  rc = project_oper.next();
+  if (rc == RC::RECORD_EOF) {
+    return rc;
+  } else if (rc != RC::SUCCESS) {
+    LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
+    return rc;
+  }
+
+  Tuple *tuple = project_oper.current_tuple();
+  TupleCell min_cell, cell; 
+  if ((rc = tuple->cell_at(0, min_cell)) != RC::SUCCESS) {
+    LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
+    return rc;
+  }
+  if (min_cell.attr_type() != AttrType::INTS && min_cell.attr_type() != AttrType::FLOATS) {
+    LOG_WARN("invalid type for min().");
+    return rc;
+  }
+
+  while ((rc = project_oper.next()) == RC::SUCCESS) {
+    // get current record
+    // write to response
+    tuple = project_oper.current_tuple();
+    if (nullptr == tuple) {
+      rc = RC::INTERNAL;
+      LOG_WARN("failed to get current record. rc=%s", strrc(rc));
+      return rc;
+    }
+
+    if ((rc = tuple->cell_at(0, cell)) != RC::SUCCESS) {
+      LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
+      return rc;
+    }
+
+    if (cell.compare(min_cell) < 0) {
+      min_cell = cell; // TODO: 考虑好内存问题
+    }
+  }
+  if (rc != RC::RECORD_EOF) {
+    LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
+  }
+  
+  min_cell.to_string(os);
+  os << std::endl;
+  rc = project_oper.close();
+
+  return rc;
+}
+
+/*
+ * 作者: 李立基
+ * 说明: 处理 sum 聚合函数
+ */
+RC do_aggr_func_sum(std::ostream &os, ProjectOperator &project_oper)
+{
+  RC rc = RC::SUCCESS;
+  print_tuple_header(os, project_oper, "SUM");
+
+  float ans = 0;
+  rc = project_oper.next();
+  if (rc == RC::RECORD_EOF) {
+    os << "0" << std::endl;
+    return rc;
+  } else if (rc != RC::SUCCESS) {
+    LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
+    return rc;
+  }
+
+  Tuple *tuple = project_oper.current_tuple();
+  TupleCell cell; 
+  if ((rc = tuple->cell_at(0, cell)) != RC::SUCCESS) {
+    LOG_ERROR("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
+    return rc;
+  }
+  int attr_type = cell.attr_type();
+  if (attr_type != AttrType::INTS && attr_type != AttrType::FLOATS) {
+    LOG_WARN("invalid type for sum().");
+    return rc;
+  }
+  if (attr_type == AttrType::INTS)
+      ans += *(int *)cell.data();
+    else
+      ans += *(float *)cell.data();
+
+  while ((rc = project_oper.next()) == RC::SUCCESS) {
+    // get current record
+    // write to response
+    tuple = project_oper.current_tuple();
+    if (nullptr == tuple) {
+      rc = RC::INTERNAL;
+      LOG_WARN("failed to get current record. rc=%s", strrc(rc));
+      return rc;
+    }
+
+    if ((rc = tuple->cell_at(0, cell)) != RC::SUCCESS) {
+      LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
+      return rc;
+    }
+    if (attr_type == AttrType::INTS)
+      ans += *(int *)cell.data();
+    else
+      ans += *(float *)cell.data();
+  }
+  if (rc != RC::RECORD_EOF) {
+    LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
+  }
+  
+  if (attr_type == AttrType::INTS) {
+    os << (int)ans;
+  } else {
+    os << std::fixed << std::setprecision(2) << ans;
+  }
+  os << std::endl;
+  rc = project_oper.close();
+
+  return rc;
+}
+
+/*
+ * 作者: 李立基
+ * 说明: 处理 avg 聚合函数
+ */
+RC do_aggr_func_avg(std::ostream &os, ProjectOperator &project_oper)
+{
+  RC rc = RC::SUCCESS;
+  print_tuple_header(os, project_oper, "AVG");
+
+  float ans = 0, cnt = 0;
+  rc = project_oper.next();
+  if (rc == RC::RECORD_EOF) {
+    os << "0" << std::endl;
+    return rc;
+  } else if (rc != RC::SUCCESS) {
+    LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
+    return rc;
+  }
+
+  Tuple *tuple = project_oper.current_tuple();
+  TupleCell cell; 
+  if ((rc = tuple->cell_at(0, cell)) != RC::SUCCESS) {
+    LOG_ERROR("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
+    return rc;
+  }
+  int attr_type = cell.attr_type();
+  if (attr_type != AttrType::INTS && attr_type != AttrType::FLOATS) {
+    LOG_WARN("invalid type for sum().");
+    return rc;
+  }
+  if (attr_type == AttrType::INTS)
+      ans += *(int *)cell.data();
+  else
+    ans += *(float *)cell.data();
+  cnt++;
+
+  while ((rc = project_oper.next()) == RC::SUCCESS) {
+    // get current record
+    // write to response
+    tuple = project_oper.current_tuple();
+    if (nullptr == tuple) {
+      rc = RC::INTERNAL;
+      LOG_WARN("failed to get current record. rc=%s", strrc(rc));
+      return rc;
+    }
+
+    if ((rc = tuple->cell_at(0, cell)) != RC::SUCCESS) {
+      LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
+      return rc;
+    }
+    if (attr_type == AttrType::INTS)
+      ans += *(int *)cell.data();
+    else
+      ans += *(float *)cell.data();
+    cnt++;
+  }
+  if (rc != RC::RECORD_EOF) {
+    LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
+  }
+  
+  os << std::fixed << std::setprecision(2) << ans/cnt << std::endl;
+  
+  rc = project_oper.close();
+
+  return rc;
+}
+
+/*
+ * 作者: 李立基
+ * 说明: 处理 count 聚合函数
+ */
+RC do_aggr_func_count(std::ostream &os, ProjectOperator &project_oper)
+{
+  RC rc = RC::SUCCESS;
+
+  Tuple *tuple;
+  int ans = 0;
+  while ((rc = project_oper.next()) == RC::SUCCESS) {
+    // get current record
+    // write to response
+    tuple = project_oper.current_tuple();
+    if (nullptr == tuple) {
+      rc = RC::INTERNAL;
+      LOG_WARN("failed to get current record. rc=%s", strrc(rc));
+      return rc;
+    }
+
+    ans++;
+  }
+  if (rc != RC::RECORD_EOF) {
+    LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
+  }
+  
+  os << ans << std::endl;
+  rc = project_oper.close();
+
+  return rc;
+}
 
 RC ExecuteStage::do_select(SQLStageEvent *sql_event)
 {
@@ -535,55 +753,35 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
   switch (select_stmt->aggr_fun())
   {
   case aggregation_fun::max_fun: {
-    // rc =  do_max_aggregation_fun(ss, select_stmt, project_oper);
-    print_tuple_header(ss, project_oper, "MAX");
-
-    rc = project_oper.next();
-    if (rc == RC::RECORD_EOF) {
-      break;
-    } else if (rc != RC::SUCCESS) {
-      LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
-      break;
-    }
-
-    Tuple *tuple = project_oper.current_tuple();
-    TupleCell max_cell, cell; 
-    if ((rc = tuple->cell_at(0, max_cell)) != RC::SUCCESS) {
-      LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
-      break; 
-    }
-    if (max_cell.attr_type() != AttrType::INTS && max_cell.attr_type() != AttrType::FLOATS) {
-      LOG_WARN("invalid type for max().");
-      break;
-    }
-
-    while ((rc = project_oper.next()) == RC::SUCCESS) {
-      // get current record
-      // write to response
-      tuple = project_oper.current_tuple();
-      if (nullptr == tuple) {
-        rc = RC::INTERNAL;
-        LOG_WARN("failed to get current record. rc=%s", strrc(rc));
-        break;
-      }
-
-      if ((rc = tuple->cell_at(0, cell)) != RC::SUCCESS) {
-        LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
-        break; 
-      }
-
-      if (cell.compare(max_cell) > 0) {
-        max_cell = cell; // TODO: 考虑好内存问题
-      }
-    }
-    if (rc != RC::RECORD_EOF) {
-      LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
-    }
-    
-    max_cell.to_string(ss);
-    ss << std::endl;
+    rc = do_aggr_func_max(ss, project_oper);
     session_event->set_response(ss.str());
-    rc = project_oper.close();
+  } break;
+
+  case aggregation_fun::min_fun: {
+    rc = do_aggr_func_min(ss, project_oper);
+    session_event->set_response(ss.str());
+  } break;
+
+  case aggregation_fun::count_fun: {
+    if (select_stmt->aggr_arg_num() == 0) {
+      ss << "COUNT(*)\n";
+    } else if (select_stmt->aggr_arg_num() > 0) {
+      ss << "COUNT(" << select_stmt->aggr_arg_num() << ")\n";
+    } else {
+      print_tuple_header(ss, project_oper, "COUNT");
+    }
+    rc = do_aggr_func_count(ss, project_oper);
+    session_event->set_response(ss.str());
+  } break;
+
+  case aggregation_fun::sum_fun: {
+    rc = do_aggr_func_sum(ss, project_oper);
+    session_event->set_response(ss.str());
+  } break;
+
+  case aggregation_fun::avg_fun: {
+    rc = do_aggr_func_avg(ss, project_oper);
+    session_event->set_response(ss.str());
   } break;
 
   default: {

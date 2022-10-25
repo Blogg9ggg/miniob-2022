@@ -75,6 +75,10 @@ QUOTE            [\'\"]
 [Nn][Oo][Tt]                                         RETURN_TOKEN(NOT);
 [Ll][Ii][Kk][Ee]                                     RETURN_TOKEN(LK);  // 李立基: 增加 LIKE 关键字
 [Mm][Aa][Xx]                                         RETURN_TOKEN(MAX); // 李立基: 增加 MAX 关键字
+[Mm][Ii][Nn]                                         RETURN_TOKEN(MIN); // 李立基: 增加 MIN 关键字
+[Cc][Oo][Uu][Nn][Tt]                                 RETURN_TOKEN(COUNT); // 李立基: 增加 COUNT 关键字
+[Aa][Vv][Gg]                                         RETURN_TOKEN(AVG); // 李立基: 增加 AVG 关键字
+[Ss][Uu][Mm]                                         RETURN_TOKEN(SUM); // 李立基: 增加 SUM 关键字
 
 {ID}                                                 yylval->string=strdup(yytext); RETURN_TOKEN(ID);
 "("                                                  RETURN_TOKEN(LBRACE);

@@ -55,7 +55,11 @@ typedef enum
 typedef enum
 {
   NO_FUN,
-  MAX_FUN
+  MAX_FUN,
+  MIN_FUN,
+  COUNT_FUN,
+  AVG_FUN,
+  SUM_FUN,
 } AggrType;
 
 //属性值
@@ -79,6 +83,7 @@ typedef struct _Condition {
 // struct of select
 typedef struct {
   int aggr_type;         // 李立基: 标记聚合函数类型
+  int aggr_arg_num;      // 李立基: 用于处理聚合函数中以数字为参数的情况(目前主要用于 count 函数). -1, 该字段无效; 0, 该字段为 *
   size_t attr_num;                // Length of attrs in Select clause
   RelAttr attributes[MAX_NUM];    // attrs in Select clause
   size_t relation_num;            // Length of relations in Fro clause

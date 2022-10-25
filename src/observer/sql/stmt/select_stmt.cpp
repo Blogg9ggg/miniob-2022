@@ -144,6 +144,7 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
   select_stmt->query_fields_.swap(query_fields);
   select_stmt->filter_stmt_ = filter_stmt;
   select_stmt->aggr_fun_ = select_sql.aggr_type;
+  select_stmt->aggr_arg_num_ = select_sql.aggr_arg_num;
   stmt = select_stmt;
   return RC::SUCCESS;
 }

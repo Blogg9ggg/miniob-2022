@@ -120,6 +120,10 @@ ParserContext *get_context(yyscan_t scanner)
 %token <number> NUMBER
 %token <floats> FLOAT 
 %token <string> MAX
+%token <string> MIN
+%token <string> COUNT
+%token <string> AVG
+%token <string> SUM
 %token <string> ID
 %token <string> PATH
 %token <string> DATE_STR	// 李立基: 增加 DATE_STR token
@@ -385,12 +389,79 @@ select:				/*  select 语句的语法解析树*/
 	;
 
 select_attr:
-	MAX LBRACE ID RBRACE {
+	MAX LBRACE ID RBRACE COMMA {
+		// 李立基: 不支持聚合函数与单个字段混合
+		CONTEXT->ssql->flag = SCF_INVALID_ATTR;
+		return -1;
+	}
+	| MIN LBRACE ID RBRACE COMMA {
+		// TODO: 合并?
+		CONTEXT->ssql->flag = SCF_INVALID_ATTR;
+		return -1;
+	}
+	| SUM LBRACE ID RBRACE COMMA {
+		// TODO: 合并?
+		CONTEXT->ssql->flag = SCF_INVALID_ATTR;
+		return -1;
+	}
+	| AVG LBRACE ID RBRACE COMMA {
+		// TODO: 合并?
+		CONTEXT->ssql->flag = SCF_INVALID_ATTR;
+		return -1;
+	}
+	| count_func COMMA {
+		// 李立基: 不支持聚合函数与单个字段混合
+		CONTEXT->ssql->flag = SCF_INVALID_ATTR;
+		return -1;
+	}
+	| MAX LBRACE ID RBRACE {
 		RelAttr attr;
 		relation_attr_init(&attr, NULL, $3);
 		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
 		// yyerror(scanner, "ju he12");
 		CONTEXT->ssql->sstr.selection.aggr_type = MAX_FUN;
+	}
+	| MIN LBRACE ID RBRACE {
+		RelAttr attr;
+		relation_attr_init(&attr, NULL, $3);
+		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+		// yyerror(scanner, "ju he12");
+		CONTEXT->ssql->sstr.selection.aggr_type = MIN_FUN;
+	}
+	| SUM LBRACE ID RBRACE {
+		RelAttr attr;
+		relation_attr_init(&attr, NULL, $3);
+		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+		CONTEXT->ssql->sstr.selection.aggr_type = SUM_FUN;
+	}
+	| AVG LBRACE ID RBRACE {
+		RelAttr attr;
+		relation_attr_init(&attr, NULL, $3);
+		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+		CONTEXT->ssql->sstr.selection.aggr_type = AVG_FUN;
+	}
+	| COUNT LBRACE STAR RBRACE  {
+		RelAttr attr;
+		relation_attr_init(&attr, NULL, "*");
+		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+		CONTEXT->ssql->sstr.selection.aggr_type = COUNT_FUN;
+		CONTEXT->ssql->sstr.selection.aggr_arg_num = 0;
+	}
+	| COUNT LBRACE ID RBRACE  {
+		RelAttr attr;
+		relation_attr_init(&attr, NULL, $3);
+		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+		CONTEXT->ssql->sstr.selection.aggr_type = COUNT_FUN;
+		CONTEXT->ssql->sstr.selection.aggr_arg_num = -1;
+	}
+	| COUNT LBRACE NUMBER RBRACE  {
+		// TODO: count(1)?
+		RelAttr attr;
+		relation_attr_init(&attr, NULL, "*");
+		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+		// yyerror(scanner, "ju he12");
+		CONTEXT->ssql->sstr.selection.aggr_type = COUNT_FUN;
+		CONTEXT->ssql->sstr.selection.aggr_arg_num = 1;
 	}
   | STAR {  
 		RelAttr attr;
@@ -412,15 +483,34 @@ select_attr:
 			relation_attr_init(&attr, $1, $3);
 			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
 		}
-		//| aggr_func attr_list {
-			// 李立基: 不支持聚合函数与单个字段混合
-		//	yyerror(scanner, "ju he12");
-		//	CONTEXT->ssql->flag = SCF_ERROR;
-		//	return -1;
-		//}
     ;
 attr_list:
     /* empty */
+		| COMMA MAX LBRACE ID RBRACE attr_list {
+			// 李立基: 不支持聚合函数与单个字段混合
+			CONTEXT->ssql->flag = SCF_INVALID_ATTR;
+			return -1;
+		}
+		| COMMA MIN LBRACE ID RBRACE attr_list {
+			// TODO: 跟上面合并?
+			CONTEXT->ssql->flag = SCF_INVALID_ATTR;
+			return -1;
+		}
+		| COMMA SUM LBRACE ID RBRACE attr_list {
+			// TODO: 跟上面合并?
+			CONTEXT->ssql->flag = SCF_INVALID_ATTR;
+			return -1;
+		}
+		| COMMA AVG LBRACE ID RBRACE attr_list {
+			// TODO: 跟上面合并?
+			CONTEXT->ssql->flag = SCF_INVALID_ATTR;
+			return -1;
+		}
+		| COMMA count_func attr_list {
+			// TODO: 跟上面合并?
+			CONTEXT->ssql->flag = SCF_INVALID_ATTR;
+			return -1;
+		}
     | COMMA ID attr_list {
 			RelAttr attr;
 			relation_attr_init(&attr, NULL, $2);
@@ -435,24 +525,18 @@ attr_list:
         // CONTEXT->ssql->sstr.selection.attributes[CONTEXT->select_length].attribute_name=$4;
         // CONTEXT->ssql->sstr.selection.attributes[CONTEXT->select_length++].relation_name=$2;
   	  }
-		| COMMA aggr_func {
-			// 李立基: 不支持聚合函数与单个字段混合
-			CONTEXT->ssql->flag = SCF_ERROR;
-			return -1;
-		}
   	;
-aggr_func:
-    MAX LBRACE ID RBRACE {
-			RelAttr attr;
-			relation_attr_init(&attr, NULL, $3);
-			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-			printf("ju he?");
-			CONTEXT->ssql->sstr.selection.aggr_type = MAX_FUN;
-		}
-		MAX LBRACE ID DOT ID RBRACE {
+count_func:
+	COUNT LBRACE STAR RBRACE {
 
-		}
-		;
+	}
+	| COUNT LBRACE NUMBER RBRACE {
+
+	}
+	| COUNT LBRACE ID RBRACE {
+
+	}
+	
 rel_list:
     /* empty */
     | COMMA ID rel_list {	
