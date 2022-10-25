@@ -864,64 +864,27 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
     return rc;
   }
 
-  switch (select_stmt->aggr_fun())
-  {
-  case aggregation_fun::max_fun: {
-    rc = do_aggr_func_max(ss, project_oper);
-    session_event->set_response(ss.str());
-  } break;
-
-  case aggregation_fun::min_fun: {
-    rc = do_aggr_func_min(ss, project_oper);
-    session_event->set_response(ss.str());
-  } break;
-
-  case aggregation_fun::count_fun: {
-    if (select_stmt->aggr_arg_num() == 0) {
-      ss << "COUNT(*)\n";
-    } else if (select_stmt->aggr_arg_num() > 0) {
-      ss << "COUNT(" << select_stmt->aggr_arg_num() << ")\n";
-    } else {
-      print_tuple_header(ss, project_oper, "COUNT");
-    }
-    rc = do_aggr_func_count(ss, project_oper);
-    session_event->set_response(ss.str());
-  } break;
-
-  case aggregation_fun::sum_fun: {
-    rc = do_aggr_func_sum(ss, project_oper);
-    session_event->set_response(ss.str());
-  } break;
-
-  case aggregation_fun::avg_fun: {
-    rc = do_aggr_func_avg(ss, project_oper);
-    session_event->set_response(ss.str());
-  } break;
-
-  default: {
-    print_tuple_header(ss, project_oper);
-    while ((rc = project_oper.next()) == RC::SUCCESS) {
-      // get current record
-      // write to response
-      Tuple *tuple = project_oper.current_tuple();
-      if (nullptr == tuple) {
-        rc = RC::INTERNAL;
-        LOG_WARN("failed to get current record. rc=%s", strrc(rc));
-        break;
-      }
-
-      tuple_to_string(ss, *tuple);
-      ss << std::endl;
+  print_tuple_header(ss, project_oper);
+  while ((rc = project_oper.next()) == RC::SUCCESS) {
+    // get current record
+    // write to response
+    Tuple *tuple = project_oper.current_tuple();
+    if (nullptr == tuple) {
+      rc = RC::INTERNAL;
+      LOG_WARN("failed to get current record. rc=%s", strrc(rc));
+      break;
     }
 
-    if (rc != RC::RECORD_EOF) {
-      LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
-    } 
-
-    session_event->set_response(ss.str());
-    rc = project_oper.close();
-  } break;
+    tuple_to_string(ss, *tuple);
+    ss << std::endl;
   }
+
+  if (rc != RC::RECORD_EOF) {
+    LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
+  } 
+
+  session_event->set_response(ss.str());
+  rc = project_oper.close();
   
   return rc;
 }
