@@ -90,73 +90,77 @@ Grammar
 
    53 select: SELECT select_attr FROM ID rel_list where SEMICOLON
 
-   54 select_attr: MAX LBRACE ID RBRACE COMMA
-   55            | MIN LBRACE ID RBRACE COMMA
-   56            | SUM LBRACE ID RBRACE COMMA
-   57            | AVG LBRACE ID RBRACE COMMA
-   58            | count_func COMMA
-   59            | MAX LBRACE ID RBRACE
-   60            | MIN LBRACE ID RBRACE
-   61            | SUM LBRACE ID RBRACE
-   62            | AVG LBRACE ID RBRACE
-   63            | COUNT LBRACE STAR RBRACE
-   64            | COUNT LBRACE ID RBRACE
-   65            | COUNT LBRACE NUMBER RBRACE
-   66            | STAR
-   67            | STAR attr_list
-   68            | ID attr_list
-   69            | ID DOT ID attr_list
+   54 select_attr: MAX LBRACE ID RBRACE aggr_func_list
+   55            | MIN LBRACE ID RBRACE aggr_func_list
+   56            | SUM LBRACE ID RBRACE aggr_func_list
+   57            | AVG LBRACE ID RBRACE aggr_func_list
+   58            | COUNT LBRACE STAR RBRACE aggr_func_list
+   59            | COUNT LBRACE NUMBER RBRACE aggr_func_list
+   60            | COUNT LBRACE ID RBRACE aggr_func_list
+   61            | STAR
+   62            | STAR attr_list
+   63            | ID attr_list
+   64            | ID DOT ID attr_list
 
-   70 attr_list: %empty
-   71          | COMMA MAX LBRACE ID RBRACE attr_list
-   72          | COMMA MIN LBRACE ID RBRACE attr_list
-   73          | COMMA SUM LBRACE ID RBRACE attr_list
-   74          | COMMA AVG LBRACE ID RBRACE attr_list
-   75          | COMMA count_func attr_list
-   76          | COMMA ID attr_list
-   77          | COMMA ID DOT ID attr_list
+   65 aggr_func_list: %empty
+   66               | COMMA MAX LBRACE ID RBRACE aggr_func_list
+   67               | COMMA MIN LBRACE ID RBRACE aggr_func_list
+   68               | COMMA SUM LBRACE ID RBRACE aggr_func_list
+   69               | COMMA AVG LBRACE ID RBRACE aggr_func_list
+   70               | COMMA COUNT LBRACE STAR RBRACE aggr_func_list
+   71               | COMMA COUNT LBRACE NUMBER RBRACE aggr_func_list
+   72               | COMMA COUNT LBRACE ID RBRACE aggr_func_list
 
-   78 count_func: COUNT LBRACE STAR RBRACE
-   79           | COUNT LBRACE NUMBER RBRACE
-   80           | COUNT LBRACE ID RBRACE
+   73 attr_list: %empty
+   74          | COMMA MAX LBRACE ID RBRACE attr_list
+   75          | COMMA MIN LBRACE ID RBRACE attr_list
+   76          | COMMA SUM LBRACE ID RBRACE attr_list
+   77          | COMMA AVG LBRACE ID RBRACE attr_list
+   78          | COMMA count_func attr_list
+   79          | COMMA ID attr_list
+   80          | COMMA ID DOT ID attr_list
 
-   81 rel_list: %empty
-   82         | COMMA ID rel_list
+   81 count_func: COUNT LBRACE STAR RBRACE
+   82           | COUNT LBRACE NUMBER RBRACE
+   83           | COUNT LBRACE ID RBRACE
 
-   83 where: %empty
-   84      | WHERE condition condition_list
+   84 rel_list: %empty
+   85         | COMMA ID rel_list
 
-   85 condition_list: %empty
-   86               | AND condition condition_list
+   86 where: %empty
+   87      | WHERE condition condition_list
 
-   87 condition: ID comOp value
-   88          | value comOp value
-   89          | ID comOp ID
-   90          | value comOp ID
-   91          | ID DOT ID comOp value
-   92          | value comOp ID DOT ID
-   93          | ID DOT ID comOp ID DOT ID
+   88 condition_list: %empty
+   89               | AND condition condition_list
 
-   94 comOp: EQ
-   95      | LT
-   96      | GT
-   97      | LE
-   98      | GE
-   99      | NE
-  100      | NOT LK
-  101      | LK
+   90 condition: ID comOp value
+   91          | value comOp value
+   92          | ID comOp ID
+   93          | value comOp ID
+   94          | ID DOT ID comOp value
+   95          | value comOp ID DOT ID
+   96          | ID DOT ID comOp ID DOT ID
 
-  102 load_data: LOAD DATA INFILE SSS INTO TABLE ID SEMICOLON
+   97 comOp: EQ
+   98      | LT
+   99      | GT
+  100      | LE
+  101      | GE
+  102      | NE
+  103      | NOT LK
+  104      | LK
+
+  105 load_data: LOAD DATA INFILE SSS INTO TABLE ID SEMICOLON
 
 
 Terminals, with rules where they appear
 
     $end (0) 0
     error (256)
-    SEMICOLON (258) 21 22 23 24 25 26 27 28 29 30 31 32 33 44 51 52 53 102
+    SEMICOLON (258) 21 22 23 24 25 26 27 28 29 30 31 32 33 44 51 52 53 105
     CREATE (259) 30 33
     DROP (260) 27 31
-    TABLE (261) 27 33 102
+    TABLE (261) 27 33 105
     TABLES (262) 28
     INDEX (263) 30 31 32
     SELECT (264) 53
@@ -166,9 +170,9 @@ Terminals, with rules where they appear
     INSERT (268) 44
     DELETE (269) 51
     UPDATE (270) 52
-    LBRACE (271) 30 33 36 44 54 55 56 57 59 60 61 62 63 64 65 71 72 73 74 78 79 80
-    RBRACE (272) 30 33 36 44 54 55 56 57 59 60 61 62 63 64 65 71 72 73 74 78 79 80
-    COMMA (273) 35 46 54 55 56 57 58 71 72 73 74 75 76 77 82
+    LBRACE (271) 30 33 36 44 54 55 56 57 58 59 60 66 67 68 69 70 71 72 74 75 76 77 81 82 83
+    RBRACE (272) 30 33 36 44 54 55 56 57 58 59 60 66 67 68 69 70 71 72 74 75 76 77 81 82 83
+    COMMA (273) 35 46 66 67 68 69 70 71 72 74 75 76 77 78 79 80 85
     TRX_BEGIN (274) 24
     TRX_COMMIT (275) 25
     TRX_ROLLBACK (276) 26
@@ -178,37 +182,37 @@ Terminals, with rules where they appear
     DATE_T (280) 42
     HELP (281) 22
     EXIT (282) 21
-    DOT (283) 69 77 91 92 93
-    INTO (284) 44 102
+    DOT (283) 64 80 94 95 96
+    INTO (284) 44 105
     VALUES (285) 44
     FROM (286) 32 51 53
-    WHERE (287) 84
-    AND (288) 86
+    WHERE (287) 87
+    AND (288) 89
     SET (289) 52
     ON (290) 30
-    LOAD (291) 102
-    DATA (292) 102
-    INFILE (293) 102
-    NOT (294) 100
-    LK (295) 100 101
-    EQ (296) 52 94
-    LT (297) 95
-    GT (298) 96
-    LE (299) 97
-    GE (300) 98
-    NE (301) 99
-    NUMBER <number> (302) 38 47 65 79
+    LOAD (291) 105
+    DATA (292) 105
+    INFILE (293) 105
+    NOT (294) 103
+    LK (295) 103 104
+    EQ (296) 52 97
+    LT (297) 98
+    GT (298) 99
+    LE (299) 100
+    GE (300) 101
+    NE (301) 102
+    NUMBER <number> (302) 38 47 59 71 82
     FLOAT <floats> (303) 48
-    MAX <string> (304) 54 59 71
-    MIN <string> (305) 55 60 72
-    COUNT <string> (306) 63 64 65 78 79 80
-    AVG <string> (307) 57 62 74
-    SUM <string> (308) 56 61 73
-    ID <string> (309) 27 29 30 31 32 33 43 44 51 52 53 54 55 56 57 59 60 61 62 64 68 69 71 72 73 74 76 77 80 82 87 89 90 91 92 93 102
+    MAX <string> (304) 54 66 74
+    MIN <string> (305) 55 67 75
+    COUNT <string> (306) 58 59 60 70 71 72 81 82 83
+    AVG <string> (307) 57 69 77
+    SUM <string> (308) 56 68 76
+    ID <string> (309) 27 29 30 31 32 33 43 44 51 52 53 54 55 56 57 60 63 64 66 67 68 69 72 74 75 76 77 79 80 83 85 90 92 93 94 95 96 105
     PATH <string> (310)
     DATE_STR <string> (311) 49
-    SSS <string> (312) 50 102
-    STAR <string> (313) 63 66 67 78
+    SSS <string> (312) 50 105
+    STAR <string> (313) 58 61 62 70 81
     STRING_V <string> (314)
 
 
@@ -284,7 +288,7 @@ Nonterminals, with rules where they appear
         on right: 44 46
     value <value1> (83)
         on left: 47 48 49 50
-        on right: 44 46 52 87 88 90 91 92
+        on right: 44 46 52 90 91 93 94 95
     delete (84)
         on left: 51
         on right: 6
@@ -295,31 +299,34 @@ Nonterminals, with rules where they appear
         on left: 53
         on right: 3
     select_attr (87)
-        on left: 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69
+        on left: 54 55 56 57 58 59 60 61 62 63 64
         on right: 53
-    attr_list (88)
-        on left: 70 71 72 73 74 75 76 77
-        on right: 67 68 69 71 72 73 74 75 76 77
-    count_func (89)
-        on left: 78 79 80
-        on right: 58 75
-    rel_list (90)
-        on left: 81 82
-        on right: 53 82
-    where (91)
-        on left: 83 84
+    aggr_func_list (88)
+        on left: 65 66 67 68 69 70 71 72
+        on right: 54 55 56 57 58 59 60 66 67 68 69 70 71 72
+    attr_list (89)
+        on left: 73 74 75 76 77 78 79 80
+        on right: 62 63 64 74 75 76 77 78 79 80
+    count_func (90)
+        on left: 81 82 83
+        on right: 78
+    rel_list (91)
+        on left: 84 85
+        on right: 53 85
+    where (92)
+        on left: 86 87
         on right: 51 52 53
-    condition_list (92)
-        on left: 85 86
-        on right: 84 86
-    condition <condition1> (93)
-        on left: 87 88 89 90 91 92 93
-        on right: 84 86
-    comOp (94)
-        on left: 94 95 96 97 98 99 100 101
-        on right: 87 88 89 90 91 92 93
-    load_data (95)
-        on left: 102
+    condition_list (93)
+        on left: 88 89
+        on right: 87 89
+    condition <condition1> (94)
+        on left: 90 91 92 93 94 95 96
+        on right: 87 89
+    comOp (95)
+        on left: 97 98 99 100 101 102 103 104
+        on right: 90 91 92 93 94 95 96
+    load_data (96)
+        on left: 105
         on right: 18
 
 
@@ -413,14 +420,13 @@ State 5
     STAR   shift, and go to state 47
 
     select_attr  go to state 48
-    count_func   go to state 49
 
 
 State 6
 
    29 desc_table: DESC . ID SEMICOLON
 
-    ID  shift, and go to state 50
+    ID  shift, and go to state 49
 
 
 State 7
@@ -428,78 +434,78 @@ State 7
    28 show_tables: SHOW . TABLES SEMICOLON
    32 show_index: SHOW . INDEX FROM ID SEMICOLON
 
-    TABLES  shift, and go to state 51
-    INDEX   shift, and go to state 52
+    TABLES  shift, and go to state 50
+    INDEX   shift, and go to state 51
 
 
 State 8
 
    23 sync: SYNC . SEMICOLON
 
-    SEMICOLON  shift, and go to state 53
+    SEMICOLON  shift, and go to state 52
 
 
 State 9
 
    44 insert: INSERT . INTO ID VALUES LBRACE value value_list RBRACE SEMICOLON
 
-    INTO  shift, and go to state 54
+    INTO  shift, and go to state 53
 
 
 State 10
 
    51 delete: DELETE . FROM ID where SEMICOLON
 
-    FROM  shift, and go to state 55
+    FROM  shift, and go to state 54
 
 
 State 11
 
    52 update: UPDATE . ID SET ID EQ value where SEMICOLON
 
-    ID  shift, and go to state 56
+    ID  shift, and go to state 55
 
 
 State 12
 
    24 begin: TRX_BEGIN . SEMICOLON
 
-    SEMICOLON  shift, and go to state 57
+    SEMICOLON  shift, and go to state 56
 
 
 State 13
 
    25 commit: TRX_COMMIT . SEMICOLON
 
-    SEMICOLON  shift, and go to state 58
+    SEMICOLON  shift, and go to state 57
 
 
 State 14
 
    26 rollback: TRX_ROLLBACK . SEMICOLON
 
-    SEMICOLON  shift, and go to state 59
+    SEMICOLON  shift, and go to state 58
 
 
 State 15
 
    22 help: HELP . SEMICOLON
 
-    SEMICOLON  shift, and go to state 60
+    SEMICOLON  shift, and go to state 59
 
 
 State 16
 
    21 exit: EXIT . SEMICOLON
 
-    SEMICOLON  shift, and go to state 61
+    SEMICOLON  shift, and go to state 60
 
 
 State 17
 
-  102 load_data: LOAD . DATA INFILE SSS INTO TABLE ID SEMICOLON
+  105 load_data: LOAD . DATA INFILE SSS INTO TABLE ID SEMICOLON
 
-    DATA  shift, and go to state 62
+    DATA  shift, and go to state 61
 
 
 State 18
@@ -639,1630 +645,1894 @@ State 37
 
    33 create_table: CREATE TABLE . ID LBRACE attr_def attr_def_list RBRACE SEMICOLON
 
-    ID  shift, and go to state 63
+    ID  shift, and go to state 62
 
 
 State 38
 
    30 create_index: CREATE INDEX . ID ON ID LBRACE ID RBRACE SEMICOLON
 
-    ID  shift, and go to state 64
+    ID  shift, and go to state 63
 
 
 State 39
 
    27 drop_table: DROP TABLE . ID SEMICOLON
 
-    ID  shift, and go to state 65
+    ID  shift, and go to state 64
 
 
 State 40
 
    31 drop_index: DROP INDEX . ID SEMICOLON
 
-    ID  shift, and go to state 66
+    ID  shift, and go to state 65
 
 
 State 41
 
-   54 select_attr: MAX . LBRACE ID RBRACE COMMA
-   59            | MAX . LBRACE ID RBRACE
+   54 select_attr: MAX . LBRACE ID RBRACE aggr_func_list
 
-    LBRACE  shift, and go to state 67
+    LBRACE  shift, and go to state 66
 
 
 State 42
 
-   55 select_attr: MIN . LBRACE ID RBRACE COMMA
-   60            | MIN . LBRACE ID RBRACE
+   55 select_attr: MIN . LBRACE ID RBRACE aggr_func_list
 
-    LBRACE  shift, and go to state 68
+    LBRACE  shift, and go to state 67
 
 
 State 43
 
-   63 select_attr: COUNT . LBRACE STAR RBRACE
-   64            | COUNT . LBRACE ID RBRACE
-   65            | COUNT . LBRACE NUMBER RBRACE
-   78 count_func: COUNT . LBRACE STAR RBRACE
-   79           | COUNT . LBRACE NUMBER RBRACE
-   80           | COUNT . LBRACE ID RBRACE
+   58 select_attr: COUNT . LBRACE STAR RBRACE aggr_func_list
+   59            | COUNT . LBRACE NUMBER RBRACE aggr_func_list
+   60            | COUNT . LBRACE ID RBRACE aggr_func_list
 
-    LBRACE  shift, and go to state 69
+    LBRACE  shift, and go to state 68
 
 
 State 44
 
-   57 select_attr: AVG . LBRACE ID RBRACE COMMA
-   62            | AVG . LBRACE ID RBRACE
+   57 select_attr: AVG . LBRACE ID RBRACE aggr_func_list
 
-    LBRACE  shift, and go to state 70
+    LBRACE  shift, and go to state 69
 
 
 State 45
 
-   56 select_attr: SUM . LBRACE ID RBRACE COMMA
-   61            | SUM . LBRACE ID RBRACE
+   56 select_attr: SUM . LBRACE ID RBRACE aggr_func_list
 
-    LBRACE  shift, and go to state 71
+    LBRACE  shift, and go to state 70
 
 
 State 46
 
-   68 select_attr: ID . attr_list
-   69            | ID . DOT ID attr_list
+   63 select_attr: ID . attr_list
+   64            | ID . DOT ID attr_list
 
-    COMMA  shift, and go to state 72
-    DOT    shift, and go to state 73
+    COMMA  shift, and go to state 71
+    DOT    shift, and go to state 72
 
-    $default  reduce using rule 70 (attr_list)
+    $default  reduce using rule 73 (attr_list)
 
-    attr_list  go to state 74
+    attr_list  go to state 73
 
 
 State 47
 
-   66 select_attr: STAR .
-   67            | STAR . attr_list
+   61 select_attr: STAR .
+   62            | STAR . attr_list
 
-    COMMA  shift, and go to state 72
+    COMMA  shift, and go to state 71
 
-    FROM      reduce using rule 66 (select_attr)
-    FROM      [reduce using rule 70 (attr_list)]
-    $default  reduce using rule 66 (select_attr)
+    FROM      reduce using rule 61 (select_attr)
+    FROM      [reduce using rule 73 (attr_list)]
+    $default  reduce using rule 61 (select_attr)
 
-    attr_list  go to state 75
+    attr_list  go to state 74
 
 
 State 48
 
    53 select: SELECT select_attr . FROM ID rel_list where SEMICOLON
 
-    FROM  shift, and go to state 76
+    FROM  shift, and go to state 75
 
 
 State 49
 
-   58 select_attr: count_func . COMMA
+   29 desc_table: DESC ID . SEMICOLON
 
-    COMMA  shift, and go to state 77
+    SEMICOLON  shift, and go to state 76
 
 
 State 50
 
-   29 desc_table: DESC ID . SEMICOLON
+   28 show_tables: SHOW TABLES . SEMICOLON
 
-    SEMICOLON  shift, and go to state 78
+    SEMICOLON  shift, and go to state 77
 
 
 State 51
 
-   28 show_tables: SHOW TABLES . SEMICOLON
+   32 show_index: SHOW INDEX . FROM ID SEMICOLON
 
-    SEMICOLON  shift, and go to state 79
+    FROM  shift, and go to state 78
 
 
 State 52
-
-   32 show_index: SHOW INDEX . FROM ID SEMICOLON
-
-    FROM  shift, and go to state 80
-
-
-State 53
 
    23 sync: SYNC SEMICOLON .
 
     $default  reduce using rule 23 (sync)
 
 
-State 54
+State 53
 
    44 insert: INSERT INTO . ID VALUES LBRACE value value_list RBRACE SEMICOLON
 
-    ID  shift, and go to state 81
+    ID  shift, and go to state 79
+
+
+State 54
+
+   51 delete: DELETE FROM . ID where SEMICOLON
+
+    ID  shift, and go to state 80
 
 
 State 55
 
-   51 delete: DELETE FROM . ID where SEMICOLON
+   52 update: UPDATE ID . SET ID EQ value where SEMICOLON
 
-    ID  shift, and go to state 82
+    SET  shift, and go to state 81
 
 
 State 56
-
-   52 update: UPDATE ID . SET ID EQ value where SEMICOLON
-
-    SET  shift, and go to state 83
-
-
-State 57
 
    24 begin: TRX_BEGIN SEMICOLON .
 
     $default  reduce using rule 24 (begin)
 
 
-State 58
+State 57
 
    25 commit: TRX_COMMIT SEMICOLON .
 
     $default  reduce using rule 25 (commit)
 
 
-State 59
+State 58
 
    26 rollback: TRX_ROLLBACK SEMICOLON .
 
     $default  reduce using rule 26 (rollback)
 
 
-State 60
+State 59
 
    22 help: HELP SEMICOLON .
 
     $default  reduce using rule 22 (help)
 
 
-State 61
+State 60
 
    21 exit: EXIT SEMICOLON .
 
     $default  reduce using rule 21 (exit)
 
 
+State 61
+
+  105 load_data: LOAD DATA . INFILE SSS INTO TABLE ID SEMICOLON
+
+    INFILE  shift, and go to state 82
+
+
 State 62
 
-  102 load_data: LOAD DATA . INFILE SSS INTO TABLE ID SEMICOLON
+   33 create_table: CREATE TABLE ID . LBRACE attr_def attr_def_list RBRACE SEMICOLON
 
-    INFILE  shift, and go to state 84
+    LBRACE  shift, and go to state 83
 
 
 State 63
 
-   33 create_table: CREATE TABLE ID . LBRACE attr_def attr_def_list RBRACE SEMICOLON
+   30 create_index: CREATE INDEX ID . ON ID LBRACE ID RBRACE SEMICOLON
 
-    LBRACE  shift, and go to state 85
+    ON  shift, and go to state 84
 
 
 State 64
 
-   30 create_index: CREATE INDEX ID . ON ID LBRACE ID RBRACE SEMICOLON
+   27 drop_table: DROP TABLE ID . SEMICOLON
 
-    ON  shift, and go to state 86
+    SEMICOLON  shift, and go to state 85
 
 
 State 65
 
-   27 drop_table: DROP TABLE ID . SEMICOLON
+   31 drop_index: DROP INDEX ID . SEMICOLON
 
-    SEMICOLON  shift, and go to state 87
+    SEMICOLON  shift, and go to state 86
 
 
 State 66
 
-   31 drop_index: DROP INDEX ID . SEMICOLON
+   54 select_attr: MAX LBRACE . ID RBRACE aggr_func_list
 
-    SEMICOLON  shift, and go to state 88
+    ID  shift, and go to state 87
 
 
 State 67
 
-   54 select_attr: MAX LBRACE . ID RBRACE COMMA
-   59            | MAX LBRACE . ID RBRACE
+   55 select_attr: MIN LBRACE . ID RBRACE aggr_func_list
 
-    ID  shift, and go to state 89
+    ID  shift, and go to state 88
 
 
 State 68
 
-   55 select_attr: MIN LBRACE . ID RBRACE COMMA
-   60            | MIN LBRACE . ID RBRACE
+   58 select_attr: COUNT LBRACE . STAR RBRACE aggr_func_list
+   59            | COUNT LBRACE . NUMBER RBRACE aggr_func_list
+   60            | COUNT LBRACE . ID RBRACE aggr_func_list
 
-    ID  shift, and go to state 90
+    NUMBER  shift, and go to state 89
+    ID      shift, and go to state 90
+    STAR    shift, and go to state 91
 
 
 State 69
 
-   63 select_attr: COUNT LBRACE . STAR RBRACE
-   64            | COUNT LBRACE . ID RBRACE
-   65            | COUNT LBRACE . NUMBER RBRACE
-   78 count_func: COUNT LBRACE . STAR RBRACE
-   79           | COUNT LBRACE . NUMBER RBRACE
-   80           | COUNT LBRACE . ID RBRACE
+   57 select_attr: AVG LBRACE . ID RBRACE aggr_func_list
 
-    NUMBER  shift, and go to state 91
-    ID      shift, and go to state 92
-    STAR    shift, and go to state 93
+    ID  shift, and go to state 92
 
 
 State 70
 
-   57 select_attr: AVG LBRACE . ID RBRACE COMMA
-   62            | AVG LBRACE . ID RBRACE
+   56 select_attr: SUM LBRACE . ID RBRACE aggr_func_list
 
-    ID  shift, and go to state 94
+    ID  shift, and go to state 93
 
 
 State 71
 
-   56 select_attr: SUM LBRACE . ID RBRACE COMMA
-   61            | SUM LBRACE . ID RBRACE
+   74 attr_list: COMMA . MAX LBRACE ID RBRACE attr_list
+   75          | COMMA . MIN LBRACE ID RBRACE attr_list
+   76          | COMMA . SUM LBRACE ID RBRACE attr_list
+   77          | COMMA . AVG LBRACE ID RBRACE attr_list
+   78          | COMMA . count_func attr_list
+   79          | COMMA . ID attr_list
+   80          | COMMA . ID DOT ID attr_list
 
-    ID  shift, and go to state 95
+    MAX    shift, and go to state 94
+    MIN    shift, and go to state 95
+    COUNT  shift, and go to state 96
+    AVG    shift, and go to state 97
+    SUM    shift, and go to state 98
+    ID     shift, and go to state 99
+
+    count_func  go to state 100
 
 
 State 72
 
-   71 attr_list: COMMA . MAX LBRACE ID RBRACE attr_list
-   72          | COMMA . MIN LBRACE ID RBRACE attr_list
-   73          | COMMA . SUM LBRACE ID RBRACE attr_list
-   74          | COMMA . AVG LBRACE ID RBRACE attr_list
-   75          | COMMA . count_func attr_list
-   76          | COMMA . ID attr_list
-   77          | COMMA . ID DOT ID attr_list
+   64 select_attr: ID DOT . ID attr_list
 
-    MAX    shift, and go to state 96
-    MIN    shift, and go to state 97
-    COUNT  shift, and go to state 98
-    AVG    shift, and go to state 99
-    SUM    shift, and go to state 100
-    ID     shift, and go to state 101
-
-    count_func  go to state 102
+    ID  shift, and go to state 101
 
 
 State 73
 
-   69 select_attr: ID DOT . ID attr_list
+   63 select_attr: ID attr_list .
 
-    ID  shift, and go to state 103
+    $default  reduce using rule 63 (select_attr)
 
 
 State 74
 
-   68 select_attr: ID attr_list .
+   62 select_attr: STAR attr_list .
 
-    $default  reduce using rule 68 (select_attr)
+    $default  reduce using rule 62 (select_attr)
 
 
 State 75
 
-   67 select_attr: STAR attr_list .
+   53 select: SELECT select_attr FROM . ID rel_list where SEMICOLON
 
-    $default  reduce using rule 67 (select_attr)
+    ID  shift, and go to state 102
 
 
 State 76
-
-   53 select: SELECT select_attr FROM . ID rel_list where SEMICOLON
-
-    ID  shift, and go to state 104
-
-
-State 77
-
-   58 select_attr: count_func COMMA .
-
-    $default  reduce using rule 58 (select_attr)
-
-
-State 78
 
    29 desc_table: DESC ID SEMICOLON .
 
     $default  reduce using rule 29 (desc_table)
 
 
-State 79
+State 77
 
    28 show_tables: SHOW TABLES SEMICOLON .
 
     $default  reduce using rule 28 (show_tables)
 
 
-State 80
+State 78
 
    32 show_index: SHOW INDEX FROM . ID SEMICOLON
 
-    ID  shift, and go to state 105
+    ID  shift, and go to state 103
+
+
+State 79
+
+   44 insert: INSERT INTO ID . VALUES LBRACE value value_list RBRACE SEMICOLON
+
+    VALUES  shift, and go to state 104
+
+
+State 80
+
+   51 delete: DELETE FROM ID . where SEMICOLON
+
+    WHERE  shift, and go to state 105
+
+    $default  reduce using rule 86 (where)
+
+    where  go to state 106
 
 
 State 81
 
-   44 insert: INSERT INTO ID . VALUES LBRACE value value_list RBRACE SEMICOLON
+   52 update: UPDATE ID SET . ID EQ value where SEMICOLON
 
-    VALUES  shift, and go to state 106
+    ID  shift, and go to state 107
 
 
 State 82
 
-   51 delete: DELETE FROM ID . where SEMICOLON
+  105 load_data: LOAD DATA INFILE . SSS INTO TABLE ID SEMICOLON
 
-    WHERE  shift, and go to state 107
-
-    $default  reduce using rule 83 (where)
-
-    where  go to state 108
+    SSS  shift, and go to state 108
 
 
 State 83
 
-   52 update: UPDATE ID SET . ID EQ value where SEMICOLON
+   33 create_table: CREATE TABLE ID LBRACE . attr_def attr_def_list RBRACE SEMICOLON
 
     ID  shift, and go to state 109
+
+    attr_def  go to state 110
+    ID_get    go to state 111
 
 
 State 84
 
-  102 load_data: LOAD DATA INFILE . SSS INTO TABLE ID SEMICOLON
+   30 create_index: CREATE INDEX ID ON . ID LBRACE ID RBRACE SEMICOLON
 
-    SSS  shift, and go to state 110
+    ID  shift, and go to state 112
 
 
 State 85
-
-   33 create_table: CREATE TABLE ID LBRACE . attr_def attr_def_list RBRACE SEMICOLON
-
-    ID  shift, and go to state 111
-
-    attr_def  go to state 112
-    ID_get    go to state 113
-
-
-State 86
-
-   30 create_index: CREATE INDEX ID ON . ID LBRACE ID RBRACE SEMICOLON
-
-    ID  shift, and go to state 114
-
-
-State 87
 
    27 drop_table: DROP TABLE ID SEMICOLON .
 
     $default  reduce using rule 27 (drop_table)
 
 
-State 88
+State 86
 
    31 drop_index: DROP INDEX ID SEMICOLON .
 
     $default  reduce using rule 31 (drop_index)
 
 
+State 87
+
+   54 select_attr: MAX LBRACE ID . RBRACE aggr_func_list
+
+    RBRACE  shift, and go to state 113
+
+
+State 88
+
+   55 select_attr: MIN LBRACE ID . RBRACE aggr_func_list
+
+    RBRACE  shift, and go to state 114
+
+
 State 89
 
-   54 select_attr: MAX LBRACE ID . RBRACE COMMA
-   59            | MAX LBRACE ID . RBRACE
+   59 select_attr: COUNT LBRACE NUMBER . RBRACE aggr_func_list
 
     RBRACE  shift, and go to state 115
 
 
 State 90
 
-   55 select_attr: MIN LBRACE ID . RBRACE COMMA
-   60            | MIN LBRACE ID . RBRACE
+   60 select_attr: COUNT LBRACE ID . RBRACE aggr_func_list
 
     RBRACE  shift, and go to state 116
 
 
 State 91
 
-   65 select_attr: COUNT LBRACE NUMBER . RBRACE
-   79 count_func: COUNT LBRACE NUMBER . RBRACE
+   58 select_attr: COUNT LBRACE STAR . RBRACE aggr_func_list
 
     RBRACE  shift, and go to state 117
 
 
 State 92
 
-   64 select_attr: COUNT LBRACE ID . RBRACE
-   80 count_func: COUNT LBRACE ID . RBRACE
+   57 select_attr: AVG LBRACE ID . RBRACE aggr_func_list
 
     RBRACE  shift, and go to state 118
 
 
 State 93
 
-   63 select_attr: COUNT LBRACE STAR . RBRACE
-   78 count_func: COUNT LBRACE STAR . RBRACE
+   56 select_attr: SUM LBRACE ID . RBRACE aggr_func_list
 
     RBRACE  shift, and go to state 119
 
 
 State 94
 
-   57 select_attr: AVG LBRACE ID . RBRACE COMMA
-   62            | AVG LBRACE ID . RBRACE
+   74 attr_list: COMMA MAX . LBRACE ID RBRACE attr_list
 
-    RBRACE  shift, and go to state 120
+    LBRACE  shift, and go to state 120
 
 
 State 95
 
-   56 select_attr: SUM LBRACE ID . RBRACE COMMA
-   61            | SUM LBRACE ID . RBRACE
+   75 attr_list: COMMA MIN . LBRACE ID RBRACE attr_list
 
-    RBRACE  shift, and go to state 121
+    LBRACE  shift, and go to state 121
 
 
 State 96
 
-   71 attr_list: COMMA MAX . LBRACE ID RBRACE attr_list
+   81 count_func: COUNT . LBRACE STAR RBRACE
+   82           | COUNT . LBRACE NUMBER RBRACE
+   83           | COUNT . LBRACE ID RBRACE
 
     LBRACE  shift, and go to state 122
 
 
 State 97
 
-   72 attr_list: COMMA MIN . LBRACE ID RBRACE attr_list
+   77 attr_list: COMMA AVG . LBRACE ID RBRACE attr_list
 
     LBRACE  shift, and go to state 123
 
 
 State 98
 
-   78 count_func: COUNT . LBRACE STAR RBRACE
-   79           | COUNT . LBRACE NUMBER RBRACE
-   80           | COUNT . LBRACE ID RBRACE
+   76 attr_list: COMMA SUM . LBRACE ID RBRACE attr_list
 
     LBRACE  shift, and go to state 124
 
 
 State 99
 
-   74 attr_list: COMMA AVG . LBRACE ID RBRACE attr_list
+   79 attr_list: COMMA ID . attr_list
+   80          | COMMA ID . DOT ID attr_list
 
-    LBRACE  shift, and go to state 125
+    COMMA  shift, and go to state 71
+    DOT    shift, and go to state 125
+
+    $default  reduce using rule 73 (attr_list)
+
+    attr_list  go to state 126
 
 
 State 100
 
-   73 attr_list: COMMA SUM . LBRACE ID RBRACE attr_list
+   78 attr_list: COMMA count_func . attr_list
 
-    LBRACE  shift, and go to state 126
+    COMMA  shift, and go to state 71
+
+    $default  reduce using rule 73 (attr_list)
+
+    attr_list  go to state 127
 
 
 State 101
 
-   76 attr_list: COMMA ID . attr_list
-   77          | COMMA ID . DOT ID attr_list
+   64 select_attr: ID DOT ID . attr_list
 
-    COMMA  shift, and go to state 72
-    DOT    shift, and go to state 127
+    COMMA  shift, and go to state 71
 
-    $default  reduce using rule 70 (attr_list)
+    $default  reduce using rule 73 (attr_list)
 
     attr_list  go to state 128
 
 
 State 102
 
-   75 attr_list: COMMA count_func . attr_list
+   53 select: SELECT select_attr FROM ID . rel_list where SEMICOLON
 
-    COMMA  shift, and go to state 72
+    COMMA  shift, and go to state 129
 
-    $default  reduce using rule 70 (attr_list)
+    $default  reduce using rule 84 (rel_list)
 
-    attr_list  go to state 129
+    rel_list  go to state 130
 
 
 State 103
 
-   69 select_attr: ID DOT ID . attr_list
+   32 show_index: SHOW INDEX FROM ID . SEMICOLON
 
-    COMMA  shift, and go to state 72
-
-    $default  reduce using rule 70 (attr_list)
-
-    attr_list  go to state 130
+    SEMICOLON  shift, and go to state 131
 
 
 State 104
 
-   53 select: SELECT select_attr FROM ID . rel_list where SEMICOLON
+   44 insert: INSERT INTO ID VALUES . LBRACE value value_list RBRACE SEMICOLON
 
-    COMMA  shift, and go to state 131
-
-    $default  reduce using rule 81 (rel_list)
-
-    rel_list  go to state 132
+    LBRACE  shift, and go to state 132
 
 
 State 105
 
-   32 show_index: SHOW INDEX FROM ID . SEMICOLON
+   87 where: WHERE . condition condition_list
 
-    SEMICOLON  shift, and go to state 133
+    NUMBER    shift, and go to state 133
+    FLOAT     shift, and go to state 134
+    ID        shift, and go to state 135
+    DATE_STR  shift, and go to state 136
+    SSS       shift, and go to state 137
+
+    value      go to state 138
+    condition  go to state 139
 
 
 State 106
 
-   44 insert: INSERT INTO ID VALUES . LBRACE value value_list RBRACE SEMICOLON
+   51 delete: DELETE FROM ID where . SEMICOLON
 
-    LBRACE  shift, and go to state 134
+    SEMICOLON  shift, and go to state 140
 
 
 State 107
 
-   84 where: WHERE . condition condition_list
+   52 update: UPDATE ID SET ID . EQ value where SEMICOLON
 
-    NUMBER    shift, and go to state 135
-    FLOAT     shift, and go to state 136
-    ID        shift, and go to state 137
-    DATE_STR  shift, and go to state 138
-    SSS       shift, and go to state 139
-
-    value      go to state 140
-    condition  go to state 141
+    EQ  shift, and go to state 141
 
 
 State 108
 
-   51 delete: DELETE FROM ID where . SEMICOLON
+  105 load_data: LOAD DATA INFILE SSS . INTO TABLE ID SEMICOLON
 
-    SEMICOLON  shift, and go to state 142
+    INTO  shift, and go to state 142
 
 
 State 109
-
-   52 update: UPDATE ID SET ID . EQ value where SEMICOLON
-
-    EQ  shift, and go to state 143
-
-
-State 110
-
-  102 load_data: LOAD DATA INFILE SSS . INTO TABLE ID SEMICOLON
-
-    INTO  shift, and go to state 144
-
-
-State 111
 
    43 ID_get: ID .
 
     $default  reduce using rule 43 (ID_get)
 
 
-State 112
+State 110
 
    33 create_table: CREATE TABLE ID LBRACE attr_def . attr_def_list RBRACE SEMICOLON
 
-    COMMA  shift, and go to state 145
+    COMMA  shift, and go to state 143
 
     $default  reduce using rule 34 (attr_def_list)
 
-    attr_def_list  go to state 146
+    attr_def_list  go to state 144
 
 
-State 113
+State 111
 
    36 attr_def: ID_get . type LBRACE number RBRACE
    37         | ID_get . type
 
-    INT_T     shift, and go to state 147
-    STRING_T  shift, and go to state 148
-    FLOAT_T   shift, and go to state 149
-    DATE_T    shift, and go to state 150
+    INT_T     shift, and go to state 145
+    STRING_T  shift, and go to state 146
+    FLOAT_T   shift, and go to state 147
+    DATE_T    shift, and go to state 148
 
-    type  go to state 151
+    type  go to state 149
+
+
+State 112
+
+   30 create_index: CREATE INDEX ID ON ID . LBRACE ID RBRACE SEMICOLON
+
+    LBRACE  shift, and go to state 150
+
+
+State 113
+
+   54 select_attr: MAX LBRACE ID RBRACE . aggr_func_list
+
+    COMMA  shift, and go to state 151
+
+    $default  reduce using rule 65 (aggr_func_list)
+
+    aggr_func_list  go to state 152
 
 
 State 114
 
-   30 create_index: CREATE INDEX ID ON ID . LBRACE ID RBRACE SEMICOLON
+   55 select_attr: MIN LBRACE ID RBRACE . aggr_func_list
 
-    LBRACE  shift, and go to state 152
+    COMMA  shift, and go to state 151
+
+    $default  reduce using rule 65 (aggr_func_list)
+
+    aggr_func_list  go to state 153
 
 
 State 115
 
-   54 select_attr: MAX LBRACE ID RBRACE . COMMA
-   59            | MAX LBRACE ID RBRACE .
+   59 select_attr: COUNT LBRACE NUMBER RBRACE . aggr_func_list
 
-    COMMA  shift, and go to state 153
+    COMMA  shift, and go to state 151
 
-    $default  reduce using rule 59 (select_attr)
+    $default  reduce using rule 65 (aggr_func_list)
+
+    aggr_func_list  go to state 154
 
 
 State 116
 
-   55 select_attr: MIN LBRACE ID RBRACE . COMMA
-   60            | MIN LBRACE ID RBRACE .
+   60 select_attr: COUNT LBRACE ID RBRACE . aggr_func_list
 
-    COMMA  shift, and go to state 154
+    COMMA  shift, and go to state 151
 
-    $default  reduce using rule 60 (select_attr)
+    $default  reduce using rule 65 (aggr_func_list)
+
+    aggr_func_list  go to state 155
 
 
 State 117
 
-   65 select_attr: COUNT LBRACE NUMBER RBRACE .
-   79 count_func: COUNT LBRACE NUMBER RBRACE .
+   58 select_attr: COUNT LBRACE STAR RBRACE . aggr_func_list
 
-    COMMA     reduce using rule 79 (count_func)
-    $default  reduce using rule 65 (select_attr)
+    COMMA  shift, and go to state 151
+
+    $default  reduce using rule 65 (aggr_func_list)
+
+    aggr_func_list  go to state 156
 
 
 State 118
 
-   64 select_attr: COUNT LBRACE ID RBRACE .
-   80 count_func: COUNT LBRACE ID RBRACE .
+   57 select_attr: AVG LBRACE ID RBRACE . aggr_func_list
 
-    COMMA     reduce using rule 80 (count_func)
-    $default  reduce using rule 64 (select_attr)
+    COMMA  shift, and go to state 151
+
+    $default  reduce using rule 65 (aggr_func_list)
+
+    aggr_func_list  go to state 157
 
 
 State 119
 
-   63 select_attr: COUNT LBRACE STAR RBRACE .
-   78 count_func: COUNT LBRACE STAR RBRACE .
+   56 select_attr: SUM LBRACE ID RBRACE . aggr_func_list
 
-    COMMA     reduce using rule 78 (count_func)
-    $default  reduce using rule 63 (select_attr)
+    COMMA  shift, and go to state 151
+
+    $default  reduce using rule 65 (aggr_func_list)
+
+    aggr_func_list  go to state 158
 
 
 State 120
 
-   57 select_attr: AVG LBRACE ID RBRACE . COMMA
-   62            | AVG LBRACE ID RBRACE .
+   74 attr_list: COMMA MAX LBRACE . ID RBRACE attr_list
 
-    COMMA  shift, and go to state 155
-
-    $default  reduce using rule 62 (select_attr)
+    ID  shift, and go to state 159
 
 
 State 121
 
-   56 select_attr: SUM LBRACE ID RBRACE . COMMA
-   61            | SUM LBRACE ID RBRACE .
+   75 attr_list: COMMA MIN LBRACE . ID RBRACE attr_list
 
-    COMMA  shift, and go to state 156
-
-    $default  reduce using rule 61 (select_attr)
+    ID  shift, and go to state 160
 
 
 State 122
 
-   71 attr_list: COMMA MAX LBRACE . ID RBRACE attr_list
+   81 count_func: COUNT LBRACE . STAR RBRACE
+   82           | COUNT LBRACE . NUMBER RBRACE
+   83           | COUNT LBRACE . ID RBRACE
 
-    ID  shift, and go to state 157
+    NUMBER  shift, and go to state 161
+    ID      shift, and go to state 162
+    STAR    shift, and go to state 163
 
 
 State 123
 
-   72 attr_list: COMMA MIN LBRACE . ID RBRACE attr_list
-
-    ID  shift, and go to state 158
-
-
-State 124
-
-   78 count_func: COUNT LBRACE . STAR RBRACE
-   79           | COUNT LBRACE . NUMBER RBRACE
-   80           | COUNT LBRACE . ID RBRACE
-
-    NUMBER  shift, and go to state 159
-    ID      shift, and go to state 160
-    STAR    shift, and go to state 161
-
-
-State 125
-
-   74 attr_list: COMMA AVG LBRACE . ID RBRACE attr_list
-
-    ID  shift, and go to state 162
-
-
-State 126
-
-   73 attr_list: COMMA SUM LBRACE . ID RBRACE attr_list
-
-    ID  shift, and go to state 163
-
-
-State 127
-
-   77 attr_list: COMMA ID DOT . ID attr_list
+   77 attr_list: COMMA AVG LBRACE . ID RBRACE attr_list
 
     ID  shift, and go to state 164
 
 
-State 128
+State 124
 
-   76 attr_list: COMMA ID attr_list .
-
-    $default  reduce using rule 76 (attr_list)
-
-
-State 129
-
-   75 attr_list: COMMA count_func attr_list .
-
-    $default  reduce using rule 75 (attr_list)
-
-
-State 130
-
-   69 select_attr: ID DOT ID attr_list .
-
-    $default  reduce using rule 69 (select_attr)
-
-
-State 131
-
-   82 rel_list: COMMA . ID rel_list
+   76 attr_list: COMMA SUM LBRACE . ID RBRACE attr_list
 
     ID  shift, and go to state 165
 
 
-State 132
+State 125
+
+   80 attr_list: COMMA ID DOT . ID attr_list
+
+    ID  shift, and go to state 166
+
+
+State 126
+
+   79 attr_list: COMMA ID attr_list .
+
+    $default  reduce using rule 79 (attr_list)
+
+
+State 127
+
+   78 attr_list: COMMA count_func attr_list .
+
+    $default  reduce using rule 78 (attr_list)
+
+
+State 128
+
+   64 select_attr: ID DOT ID attr_list .
+
+    $default  reduce using rule 64 (select_attr)
+
+
+State 129
+
+   85 rel_list: COMMA . ID rel_list
+
+    ID  shift, and go to state 167
+
+
+State 130
 
    53 select: SELECT select_attr FROM ID rel_list . where SEMICOLON
 
-    WHERE  shift, and go to state 107
+    WHERE  shift, and go to state 105
 
-    $default  reduce using rule 83 (where)
+    $default  reduce using rule 86 (where)
 
-    where  go to state 166
+    where  go to state 168
 
 
-State 133
+State 131
 
    32 show_index: SHOW INDEX FROM ID SEMICOLON .
 
     $default  reduce using rule 32 (show_index)
 
 
-State 134
+State 132
 
    44 insert: INSERT INTO ID VALUES LBRACE . value value_list RBRACE SEMICOLON
 
-    NUMBER    shift, and go to state 135
-    FLOAT     shift, and go to state 136
-    DATE_STR  shift, and go to state 138
-    SSS       shift, and go to state 139
+    NUMBER    shift, and go to state 133
+    FLOAT     shift, and go to state 134
+    DATE_STR  shift, and go to state 136
+    SSS       shift, and go to state 137
 
-    value  go to state 167
+    value  go to state 169
 
 
-State 135
+State 133
 
    47 value: NUMBER .
 
     $default  reduce using rule 47 (value)
 
 
-State 136
+State 134
 
    48 value: FLOAT .
 
     $default  reduce using rule 48 (value)
 
 
-State 137
+State 135
 
-   87 condition: ID . comOp value
-   89          | ID . comOp ID
-   91          | ID . DOT ID comOp value
-   93          | ID . DOT ID comOp ID DOT ID
+   90 condition: ID . comOp value
+   92          | ID . comOp ID
+   94          | ID . DOT ID comOp value
+   96          | ID . DOT ID comOp ID DOT ID
 
-    DOT  shift, and go to state 168
-    NOT  shift, and go to state 169
-    LK   shift, and go to state 170
-    EQ   shift, and go to state 171
-    LT   shift, and go to state 172
-    GT   shift, and go to state 173
-    LE   shift, and go to state 174
-    GE   shift, and go to state 175
-    NE   shift, and go to state 176
+    DOT  shift, and go to state 170
+    NOT  shift, and go to state 171
+    LK   shift, and go to state 172
+    EQ   shift, and go to state 173
+    LT   shift, and go to state 174
+    GT   shift, and go to state 175
+    LE   shift, and go to state 176
+    GE   shift, and go to state 177
+    NE   shift, and go to state 178
 
-    comOp  go to state 177
+    comOp  go to state 179
 
 
-State 138
+State 136
 
    49 value: DATE_STR .
 
     $default  reduce using rule 49 (value)
 
 
-State 139
+State 137
 
    50 value: SSS .
 
     $default  reduce using rule 50 (value)
 
 
+State 138
+
+   91 condition: value . comOp value
+   93          | value . comOp ID
+   95          | value . comOp ID DOT ID
+
+    NOT  shift, and go to state 171
+    LK   shift, and go to state 172
+    EQ   shift, and go to state 173
+    LT   shift, and go to state 174
+    GT   shift, and go to state 175
+    LE   shift, and go to state 176
+    GE   shift, and go to state 177
+    NE   shift, and go to state 178
+
+    comOp  go to state 180
+
+
+State 139
+
+   87 where: WHERE condition . condition_list
+
+    AND  shift, and go to state 181
+
+    $default  reduce using rule 88 (condition_list)
+
+    condition_list  go to state 182
+
+
 State 140
-
-   88 condition: value . comOp value
-   90          | value . comOp ID
-   92          | value . comOp ID DOT ID
-
-    NOT  shift, and go to state 169
-    LK   shift, and go to state 170
-    EQ   shift, and go to state 171
-    LT   shift, and go to state 172
-    GT   shift, and go to state 173
-    LE   shift, and go to state 174
-    GE   shift, and go to state 175
-    NE   shift, and go to state 176
-
-    comOp  go to state 178
-
-
-State 141
-
-   84 where: WHERE condition . condition_list
-
-    AND  shift, and go to state 179
-
-    $default  reduce using rule 85 (condition_list)
-
-    condition_list  go to state 180
-
-
-State 142
 
    51 delete: DELETE FROM ID where SEMICOLON .
 
     $default  reduce using rule 51 (delete)
 
 
-State 143
+State 141
 
    52 update: UPDATE ID SET ID EQ . value where SEMICOLON
 
-    NUMBER    shift, and go to state 135
-    FLOAT     shift, and go to state 136
-    DATE_STR  shift, and go to state 138
-    SSS       shift, and go to state 139
+    NUMBER    shift, and go to state 133
+    FLOAT     shift, and go to state 134
+    DATE_STR  shift, and go to state 136
+    SSS       shift, and go to state 137
 
-    value  go to state 181
+    value  go to state 183
+
+
+State 142
+
+  105 load_data: LOAD DATA INFILE SSS INTO . TABLE ID SEMICOLON
+
+    TABLE  shift, and go to state 184
+
+
+State 143
+
+   35 attr_def_list: COMMA . attr_def attr_def_list
+
+    ID  shift, and go to state 109
+
+    attr_def  go to state 185
+    ID_get    go to state 111
 
 
 State 144
 
-  102 load_data: LOAD DATA INFILE SSS INTO . TABLE ID SEMICOLON
+   33 create_table: CREATE TABLE ID LBRACE attr_def attr_def_list . RBRACE SEMICOLON
 
-    TABLE  shift, and go to state 182
+    RBRACE  shift, and go to state 186
 
 
 State 145
-
-   35 attr_def_list: COMMA . attr_def attr_def_list
-
-    ID  shift, and go to state 111
-
-    attr_def  go to state 183
-    ID_get    go to state 113
-
-
-State 146
-
-   33 create_table: CREATE TABLE ID LBRACE attr_def attr_def_list . RBRACE SEMICOLON
-
-    RBRACE  shift, and go to state 184
-
-
-State 147
 
    39 type: INT_T .
 
     $default  reduce using rule 39 (type)
 
 
-State 148
+State 146
 
    40 type: STRING_T .
 
     $default  reduce using rule 40 (type)
 
 
-State 149
+State 147
 
    41 type: FLOAT_T .
 
     $default  reduce using rule 41 (type)
 
 
-State 150
+State 148
 
    42 type: DATE_T .
 
     $default  reduce using rule 42 (type)
 
 
-State 151
+State 149
 
    36 attr_def: ID_get type . LBRACE number RBRACE
    37         | ID_get type .
 
-    LBRACE  shift, and go to state 185
+    LBRACE  shift, and go to state 187
 
     $default  reduce using rule 37 (attr_def)
 
 
-State 152
+State 150
 
    30 create_index: CREATE INDEX ID ON ID LBRACE . ID RBRACE SEMICOLON
 
-    ID  shift, and go to state 186
+    ID  shift, and go to state 188
 
 
-State 153
+State 151
 
-   54 select_attr: MAX LBRACE ID RBRACE COMMA .
+   66 aggr_func_list: COMMA . MAX LBRACE ID RBRACE aggr_func_list
+   67               | COMMA . MIN LBRACE ID RBRACE aggr_func_list
+   68               | COMMA . SUM LBRACE ID RBRACE aggr_func_list
+   69               | COMMA . AVG LBRACE ID RBRACE aggr_func_list
+   70               | COMMA . COUNT LBRACE STAR RBRACE aggr_func_list
+   71               | COMMA . COUNT LBRACE NUMBER RBRACE aggr_func_list
+   72               | COMMA . COUNT LBRACE ID RBRACE aggr_func_list
+
+    MAX    shift, and go to state 189
+    MIN    shift, and go to state 190
+    COUNT  shift, and go to state 191
+    AVG    shift, and go to state 192
+    SUM    shift, and go to state 193
+
+
+State 152
+
+   54 select_attr: MAX LBRACE ID RBRACE aggr_func_list .
 
     $default  reduce using rule 54 (select_attr)
 
 
-State 154
+State 153
 
-   55 select_attr: MIN LBRACE ID RBRACE COMMA .
+   55 select_attr: MIN LBRACE ID RBRACE aggr_func_list .
 
     $default  reduce using rule 55 (select_attr)
 
 
+State 154
+
+   59 select_attr: COUNT LBRACE NUMBER RBRACE aggr_func_list .
+
+    $default  reduce using rule 59 (select_attr)
+
+
 State 155
 
-   57 select_attr: AVG LBRACE ID RBRACE COMMA .
+   60 select_attr: COUNT LBRACE ID RBRACE aggr_func_list .
 
-    $default  reduce using rule 57 (select_attr)
+    $default  reduce using rule 60 (select_attr)
 
 
 State 156
 
-   56 select_attr: SUM LBRACE ID RBRACE COMMA .
+   58 select_attr: COUNT LBRACE STAR RBRACE aggr_func_list .
 
-    $default  reduce using rule 56 (select_attr)
+    $default  reduce using rule 58 (select_attr)
 
 
 State 157
 
-   71 attr_list: COMMA MAX LBRACE ID . RBRACE attr_list
+   57 select_attr: AVG LBRACE ID RBRACE aggr_func_list .
 
-    RBRACE  shift, and go to state 187
+    $default  reduce using rule 57 (select_attr)
 
 
 State 158
 
-   72 attr_list: COMMA MIN LBRACE ID . RBRACE attr_list
+   56 select_attr: SUM LBRACE ID RBRACE aggr_func_list .
 
-    RBRACE  shift, and go to state 188
+    $default  reduce using rule 56 (select_attr)
 
 
 State 159
 
-   79 count_func: COUNT LBRACE NUMBER . RBRACE
+   74 attr_list: COMMA MAX LBRACE ID . RBRACE attr_list
 
-    RBRACE  shift, and go to state 189
+    RBRACE  shift, and go to state 194
 
 
 State 160
 
-   80 count_func: COUNT LBRACE ID . RBRACE
+   75 attr_list: COMMA MIN LBRACE ID . RBRACE attr_list
 
-    RBRACE  shift, and go to state 190
+    RBRACE  shift, and go to state 195
 
 
 State 161
 
-   78 count_func: COUNT LBRACE STAR . RBRACE
+   82 count_func: COUNT LBRACE NUMBER . RBRACE
 
-    RBRACE  shift, and go to state 191
+    RBRACE  shift, and go to state 196
 
 
 State 162
 
-   74 attr_list: COMMA AVG LBRACE ID . RBRACE attr_list
+   83 count_func: COUNT LBRACE ID . RBRACE
 
-    RBRACE  shift, and go to state 192
+    RBRACE  shift, and go to state 197
 
 
 State 163
 
-   73 attr_list: COMMA SUM LBRACE ID . RBRACE attr_list
+   81 count_func: COUNT LBRACE STAR . RBRACE
 
-    RBRACE  shift, and go to state 193
+    RBRACE  shift, and go to state 198
 
 
 State 164
 
-   77 attr_list: COMMA ID DOT ID . attr_list
+   77 attr_list: COMMA AVG LBRACE ID . RBRACE attr_list
 
-    COMMA  shift, and go to state 72
-
-    $default  reduce using rule 70 (attr_list)
-
-    attr_list  go to state 194
+    RBRACE  shift, and go to state 199
 
 
 State 165
 
-   82 rel_list: COMMA ID . rel_list
+   76 attr_list: COMMA SUM LBRACE ID . RBRACE attr_list
 
-    COMMA  shift, and go to state 131
-
-    $default  reduce using rule 81 (rel_list)
-
-    rel_list  go to state 195
+    RBRACE  shift, and go to state 200
 
 
 State 166
 
-   53 select: SELECT select_attr FROM ID rel_list where . SEMICOLON
+   80 attr_list: COMMA ID DOT ID . attr_list
 
-    SEMICOLON  shift, and go to state 196
+    COMMA  shift, and go to state 71
+
+    $default  reduce using rule 73 (attr_list)
+
+    attr_list  go to state 201
 
 
 State 167
 
-   44 insert: INSERT INTO ID VALUES LBRACE value . value_list RBRACE SEMICOLON
+   85 rel_list: COMMA ID . rel_list
 
-    COMMA  shift, and go to state 197
+    COMMA  shift, and go to state 129
 
-    $default  reduce using rule 45 (value_list)
+    $default  reduce using rule 84 (rel_list)
 
-    value_list  go to state 198
+    rel_list  go to state 202
 
 
 State 168
 
-   91 condition: ID DOT . ID comOp value
-   93          | ID DOT . ID comOp ID DOT ID
+   53 select: SELECT select_attr FROM ID rel_list where . SEMICOLON
 
-    ID  shift, and go to state 199
+    SEMICOLON  shift, and go to state 203
 
 
 State 169
 
-  100 comOp: NOT . LK
+   44 insert: INSERT INTO ID VALUES LBRACE value . value_list RBRACE SEMICOLON
 
-    LK  shift, and go to state 200
+    COMMA  shift, and go to state 204
+
+    $default  reduce using rule 45 (value_list)
+
+    value_list  go to state 205
 
 
 State 170
 
-  101 comOp: LK .
+   94 condition: ID DOT . ID comOp value
+   96          | ID DOT . ID comOp ID DOT ID
 
-    $default  reduce using rule 101 (comOp)
+    ID  shift, and go to state 206
 
 
 State 171
 
-   94 comOp: EQ .
+  103 comOp: NOT . LK
 
-    $default  reduce using rule 94 (comOp)
+    LK  shift, and go to state 207
 
 
 State 172
 
-   95 comOp: LT .
+  104 comOp: LK .
 
-    $default  reduce using rule 95 (comOp)
+    $default  reduce using rule 104 (comOp)
 
 
 State 173
 
-   96 comOp: GT .
-
-    $default  reduce using rule 96 (comOp)
-
-
-State 174
-
-   97 comOp: LE .
+   97 comOp: EQ .
 
     $default  reduce using rule 97 (comOp)
 
 
-State 175
+State 174
 
-   98 comOp: GE .
+   98 comOp: LT .
 
     $default  reduce using rule 98 (comOp)
 
 
-State 176
+State 175
 
-   99 comOp: NE .
+   99 comOp: GT .
 
     $default  reduce using rule 99 (comOp)
 
 
+State 176
+
+  100 comOp: LE .
+
+    $default  reduce using rule 100 (comOp)
+
+
 State 177
 
-   87 condition: ID comOp . value
-   89          | ID comOp . ID
+  101 comOp: GE .
 
-    NUMBER    shift, and go to state 135
-    FLOAT     shift, and go to state 136
-    ID        shift, and go to state 201
-    DATE_STR  shift, and go to state 138
-    SSS       shift, and go to state 139
-
-    value  go to state 202
+    $default  reduce using rule 101 (comOp)
 
 
 State 178
 
-   88 condition: value comOp . value
-   90          | value comOp . ID
-   92          | value comOp . ID DOT ID
+  102 comOp: NE .
 
-    NUMBER    shift, and go to state 135
-    FLOAT     shift, and go to state 136
-    ID        shift, and go to state 203
-    DATE_STR  shift, and go to state 138
-    SSS       shift, and go to state 139
-
-    value  go to state 204
+    $default  reduce using rule 102 (comOp)
 
 
 State 179
 
-   86 condition_list: AND . condition condition_list
+   90 condition: ID comOp . value
+   92          | ID comOp . ID
 
-    NUMBER    shift, and go to state 135
-    FLOAT     shift, and go to state 136
-    ID        shift, and go to state 137
-    DATE_STR  shift, and go to state 138
-    SSS       shift, and go to state 139
+    NUMBER    shift, and go to state 133
+    FLOAT     shift, and go to state 134
+    ID        shift, and go to state 208
+    DATE_STR  shift, and go to state 136
+    SSS       shift, and go to state 137
 
-    value      go to state 140
-    condition  go to state 205
+    value  go to state 209
 
 
 State 180
 
-   84 where: WHERE condition condition_list .
+   91 condition: value comOp . value
+   93          | value comOp . ID
+   95          | value comOp . ID DOT ID
 
-    $default  reduce using rule 84 (where)
+    NUMBER    shift, and go to state 133
+    FLOAT     shift, and go to state 134
+    ID        shift, and go to state 210
+    DATE_STR  shift, and go to state 136
+    SSS       shift, and go to state 137
+
+    value  go to state 211
 
 
 State 181
 
-   52 update: UPDATE ID SET ID EQ value . where SEMICOLON
+   89 condition_list: AND . condition condition_list
 
-    WHERE  shift, and go to state 107
+    NUMBER    shift, and go to state 133
+    FLOAT     shift, and go to state 134
+    ID        shift, and go to state 135
+    DATE_STR  shift, and go to state 136
+    SSS       shift, and go to state 137
 
-    $default  reduce using rule 83 (where)
-
-    where  go to state 206
+    value      go to state 138
+    condition  go to state 212
 
 
 State 182
 
-  102 load_data: LOAD DATA INFILE SSS INTO TABLE . ID SEMICOLON
+   87 where: WHERE condition condition_list .
 
-    ID  shift, and go to state 207
+    $default  reduce using rule 87 (where)
 
 
 State 183
 
-   35 attr_def_list: COMMA attr_def . attr_def_list
+   52 update: UPDATE ID SET ID EQ value . where SEMICOLON
 
-    COMMA  shift, and go to state 145
+    WHERE  shift, and go to state 105
 
-    $default  reduce using rule 34 (attr_def_list)
+    $default  reduce using rule 86 (where)
 
-    attr_def_list  go to state 208
+    where  go to state 213
 
 
 State 184
 
-   33 create_table: CREATE TABLE ID LBRACE attr_def attr_def_list RBRACE . SEMICOLON
+  105 load_data: LOAD DATA INFILE SSS INTO TABLE . ID SEMICOLON
 
-    SEMICOLON  shift, and go to state 209
+    ID  shift, and go to state 214
 
 
 State 185
 
-   36 attr_def: ID_get type LBRACE . number RBRACE
+   35 attr_def_list: COMMA attr_def . attr_def_list
 
-    NUMBER  shift, and go to state 210
+    COMMA  shift, and go to state 143
 
-    number  go to state 211
+    $default  reduce using rule 34 (attr_def_list)
+
+    attr_def_list  go to state 215
 
 
 State 186
 
-   30 create_index: CREATE INDEX ID ON ID LBRACE ID . RBRACE SEMICOLON
+   33 create_table: CREATE TABLE ID LBRACE attr_def attr_def_list RBRACE . SEMICOLON
 
-    RBRACE  shift, and go to state 212
+    SEMICOLON  shift, and go to state 216
 
 
 State 187
 
-   71 attr_list: COMMA MAX LBRACE ID RBRACE . attr_list
+   36 attr_def: ID_get type LBRACE . number RBRACE
 
-    COMMA  shift, and go to state 72
+    NUMBER  shift, and go to state 217
 
-    $default  reduce using rule 70 (attr_list)
-
-    attr_list  go to state 213
+    number  go to state 218
 
 
 State 188
 
-   72 attr_list: COMMA MIN LBRACE ID RBRACE . attr_list
+   30 create_index: CREATE INDEX ID ON ID LBRACE ID . RBRACE SEMICOLON
 
-    COMMA  shift, and go to state 72
-
-    $default  reduce using rule 70 (attr_list)
-
-    attr_list  go to state 214
+    RBRACE  shift, and go to state 219
 
 
 State 189
 
-   79 count_func: COUNT LBRACE NUMBER RBRACE .
+   66 aggr_func_list: COMMA MAX . LBRACE ID RBRACE aggr_func_list
 
-    $default  reduce using rule 79 (count_func)
+    LBRACE  shift, and go to state 220
 
 
 State 190
 
-   80 count_func: COUNT LBRACE ID RBRACE .
+   67 aggr_func_list: COMMA MIN . LBRACE ID RBRACE aggr_func_list
 
-    $default  reduce using rule 80 (count_func)
+    LBRACE  shift, and go to state 221
 
 
 State 191
 
-   78 count_func: COUNT LBRACE STAR RBRACE .
+   70 aggr_func_list: COMMA COUNT . LBRACE STAR RBRACE aggr_func_list
+   71               | COMMA COUNT . LBRACE NUMBER RBRACE aggr_func_list
+   72               | COMMA COUNT . LBRACE ID RBRACE aggr_func_list
 
-    $default  reduce using rule 78 (count_func)
+    LBRACE  shift, and go to state 222
 
 
 State 192
 
-   74 attr_list: COMMA AVG LBRACE ID RBRACE . attr_list
+   69 aggr_func_list: COMMA AVG . LBRACE ID RBRACE aggr_func_list
 
-    COMMA  shift, and go to state 72
-
-    $default  reduce using rule 70 (attr_list)
-
-    attr_list  go to state 215
+    LBRACE  shift, and go to state 223
 
 
 State 193
 
-   73 attr_list: COMMA SUM LBRACE ID RBRACE . attr_list
+   68 aggr_func_list: COMMA SUM . LBRACE ID RBRACE aggr_func_list
 
-    COMMA  shift, and go to state 72
-
-    $default  reduce using rule 70 (attr_list)
-
-    attr_list  go to state 216
+    LBRACE  shift, and go to state 224
 
 
 State 194
 
-   77 attr_list: COMMA ID DOT ID attr_list .
+   74 attr_list: COMMA MAX LBRACE ID RBRACE . attr_list
 
-    $default  reduce using rule 77 (attr_list)
+    COMMA  shift, and go to state 71
+
+    $default  reduce using rule 73 (attr_list)
+
+    attr_list  go to state 225
 
 
 State 195
 
-   82 rel_list: COMMA ID rel_list .
+   75 attr_list: COMMA MIN LBRACE ID RBRACE . attr_list
 
-    $default  reduce using rule 82 (rel_list)
+    COMMA  shift, and go to state 71
+
+    $default  reduce using rule 73 (attr_list)
+
+    attr_list  go to state 226
 
 
 State 196
+
+   82 count_func: COUNT LBRACE NUMBER RBRACE .
+
+    $default  reduce using rule 82 (count_func)
+
+
+State 197
+
+   83 count_func: COUNT LBRACE ID RBRACE .
+
+    $default  reduce using rule 83 (count_func)
+
+
+State 198
+
+   81 count_func: COUNT LBRACE STAR RBRACE .
+
+    $default  reduce using rule 81 (count_func)
+
+
+State 199
+
+   77 attr_list: COMMA AVG LBRACE ID RBRACE . attr_list
+
+    COMMA  shift, and go to state 71
+
+    $default  reduce using rule 73 (attr_list)
+
+    attr_list  go to state 227
+
+
+State 200
+
+   76 attr_list: COMMA SUM LBRACE ID RBRACE . attr_list
+
+    COMMA  shift, and go to state 71
+
+    $default  reduce using rule 73 (attr_list)
+
+    attr_list  go to state 228
+
+
+State 201
+
+   80 attr_list: COMMA ID DOT ID attr_list .
+
+    $default  reduce using rule 80 (attr_list)
+
+
+State 202
+
+   85 rel_list: COMMA ID rel_list .
+
+    $default  reduce using rule 85 (rel_list)
+
+
+State 203
 
    53 select: SELECT select_attr FROM ID rel_list where SEMICOLON .
 
     $default  reduce using rule 53 (select)
 
 
-State 197
+State 204
 
    46 value_list: COMMA . value value_list
 
-    NUMBER    shift, and go to state 135
-    FLOAT     shift, and go to state 136
-    DATE_STR  shift, and go to state 138
-    SSS       shift, and go to state 139
+    NUMBER    shift, and go to state 133
+    FLOAT     shift, and go to state 134
+    DATE_STR  shift, and go to state 136
+    SSS       shift, and go to state 137
 
-    value  go to state 217
-
-
-State 198
-
-   44 insert: INSERT INTO ID VALUES LBRACE value value_list . RBRACE SEMICOLON
-
-    RBRACE  shift, and go to state 218
-
-
-State 199
-
-   91 condition: ID DOT ID . comOp value
-   93          | ID DOT ID . comOp ID DOT ID
-
-    NOT  shift, and go to state 169
-    LK   shift, and go to state 170
-    EQ   shift, and go to state 171
-    LT   shift, and go to state 172
-    GT   shift, and go to state 173
-    LE   shift, and go to state 174
-    GE   shift, and go to state 175
-    NE   shift, and go to state 176
-
-    comOp  go to state 219
-
-
-State 200
-
-  100 comOp: NOT LK .
-
-    $default  reduce using rule 100 (comOp)
-
-
-State 201
-
-   89 condition: ID comOp ID .
-
-    $default  reduce using rule 89 (condition)
-
-
-State 202
-
-   87 condition: ID comOp value .
-
-    $default  reduce using rule 87 (condition)
-
-
-State 203
-
-   90 condition: value comOp ID .
-   92          | value comOp ID . DOT ID
-
-    DOT  shift, and go to state 220
-
-    $default  reduce using rule 90 (condition)
-
-
-State 204
-
-   88 condition: value comOp value .
-
-    $default  reduce using rule 88 (condition)
+    value  go to state 229
 
 
 State 205
 
-   86 condition_list: AND condition . condition_list
+   44 insert: INSERT INTO ID VALUES LBRACE value value_list . RBRACE SEMICOLON
 
-    AND  shift, and go to state 179
-
-    $default  reduce using rule 85 (condition_list)
-
-    condition_list  go to state 221
+    RBRACE  shift, and go to state 230
 
 
 State 206
 
-   52 update: UPDATE ID SET ID EQ value where . SEMICOLON
+   94 condition: ID DOT ID . comOp value
+   96          | ID DOT ID . comOp ID DOT ID
 
-    SEMICOLON  shift, and go to state 222
+    NOT  shift, and go to state 171
+    LK   shift, and go to state 172
+    EQ   shift, and go to state 173
+    LT   shift, and go to state 174
+    GT   shift, and go to state 175
+    LE   shift, and go to state 176
+    GE   shift, and go to state 177
+    NE   shift, and go to state 178
+
+    comOp  go to state 231
 
 
 State 207
 
-  102 load_data: LOAD DATA INFILE SSS INTO TABLE ID . SEMICOLON
+  103 comOp: NOT LK .
 
-    SEMICOLON  shift, and go to state 223
+    $default  reduce using rule 103 (comOp)
 
 
 State 208
+
+   92 condition: ID comOp ID .
+
+    $default  reduce using rule 92 (condition)
+
+
+State 209
+
+   90 condition: ID comOp value .
+
+    $default  reduce using rule 90 (condition)
+
+
+State 210
+
+   93 condition: value comOp ID .
+   95          | value comOp ID . DOT ID
+
+    DOT  shift, and go to state 232
+
+    $default  reduce using rule 93 (condition)
+
+
+State 211
+
+   91 condition: value comOp value .
+
+    $default  reduce using rule 91 (condition)
+
+
+State 212
+
+   89 condition_list: AND condition . condition_list
+
+    AND  shift, and go to state 181
+
+    $default  reduce using rule 88 (condition_list)
+
+    condition_list  go to state 233
+
+
+State 213
+
+   52 update: UPDATE ID SET ID EQ value where . SEMICOLON
+
+    SEMICOLON  shift, and go to state 234
+
+
+State 214
+
+  105 load_data: LOAD DATA INFILE SSS INTO TABLE ID . SEMICOLON
+
+    SEMICOLON  shift, and go to state 235
+
+
+State 215
 
    35 attr_def_list: COMMA attr_def attr_def_list .
 
     $default  reduce using rule 35 (attr_def_list)
 
 
-State 209
+State 216
 
    33 create_table: CREATE TABLE ID LBRACE attr_def attr_def_list RBRACE SEMICOLON .
 
     $default  reduce using rule 33 (create_table)
 
 
-State 210
+State 217
 
    38 number: NUMBER .
 
     $default  reduce using rule 38 (number)
 
 
-State 211
+State 218
 
    36 attr_def: ID_get type LBRACE number . RBRACE
 
-    RBRACE  shift, and go to state 224
-
-
-State 212
-
-   30 create_index: CREATE INDEX ID ON ID LBRACE ID RBRACE . SEMICOLON
-
-    SEMICOLON  shift, and go to state 225
-
-
-State 213
-
-   71 attr_list: COMMA MAX LBRACE ID RBRACE attr_list .
-
-    $default  reduce using rule 71 (attr_list)
-
-
-State 214
-
-   72 attr_list: COMMA MIN LBRACE ID RBRACE attr_list .
-
-    $default  reduce using rule 72 (attr_list)
-
-
-State 215
-
-   74 attr_list: COMMA AVG LBRACE ID RBRACE attr_list .
-
-    $default  reduce using rule 74 (attr_list)
-
-
-State 216
-
-   73 attr_list: COMMA SUM LBRACE ID RBRACE attr_list .
-
-    $default  reduce using rule 73 (attr_list)
-
-
-State 217
-
-   46 value_list: COMMA value . value_list
-
-    COMMA  shift, and go to state 197
-
-    $default  reduce using rule 45 (value_list)
-
-    value_list  go to state 226
-
-
-State 218
-
-   44 insert: INSERT INTO ID VALUES LBRACE value value_list RBRACE . SEMICOLON
-
-    SEMICOLON  shift, and go to state 227
+    RBRACE  shift, and go to state 236
 
 
 State 219
 
-   91 condition: ID DOT ID comOp . value
-   93          | ID DOT ID comOp . ID DOT ID
+   30 create_index: CREATE INDEX ID ON ID LBRACE ID RBRACE . SEMICOLON
 
-    NUMBER    shift, and go to state 135
-    FLOAT     shift, and go to state 136
-    ID        shift, and go to state 228
-    DATE_STR  shift, and go to state 138
-    SSS       shift, and go to state 139
-
-    value  go to state 229
+    SEMICOLON  shift, and go to state 237
 
 
 State 220
 
-   92 condition: value comOp ID DOT . ID
+   66 aggr_func_list: COMMA MAX LBRACE . ID RBRACE aggr_func_list
 
-    ID  shift, and go to state 230
+    ID  shift, and go to state 238
 
 
 State 221
 
-   86 condition_list: AND condition condition_list .
+   67 aggr_func_list: COMMA MIN LBRACE . ID RBRACE aggr_func_list
 
-    $default  reduce using rule 86 (condition_list)
+    ID  shift, and go to state 239
 
 
 State 222
+
+   70 aggr_func_list: COMMA COUNT LBRACE . STAR RBRACE aggr_func_list
+   71               | COMMA COUNT LBRACE . NUMBER RBRACE aggr_func_list
+   72               | COMMA COUNT LBRACE . ID RBRACE aggr_func_list
+
+    NUMBER  shift, and go to state 240
+    ID      shift, and go to state 241
+    STAR    shift, and go to state 242
+
+
+State 223
+
+   69 aggr_func_list: COMMA AVG LBRACE . ID RBRACE aggr_func_list
+
+    ID  shift, and go to state 243
+
+
+State 224
+
+   68 aggr_func_list: COMMA SUM LBRACE . ID RBRACE aggr_func_list
+
+    ID  shift, and go to state 244
+
+
+State 225
+
+   74 attr_list: COMMA MAX LBRACE ID RBRACE attr_list .
+
+    $default  reduce using rule 74 (attr_list)
+
+
+State 226
+
+   75 attr_list: COMMA MIN LBRACE ID RBRACE attr_list .
+
+    $default  reduce using rule 75 (attr_list)
+
+
+State 227
+
+   77 attr_list: COMMA AVG LBRACE ID RBRACE attr_list .
+
+    $default  reduce using rule 77 (attr_list)
+
+
+State 228
+
+   76 attr_list: COMMA SUM LBRACE ID RBRACE attr_list .
+
+    $default  reduce using rule 76 (attr_list)
+
+
+State 229
+
+   46 value_list: COMMA value . value_list
+
+    COMMA  shift, and go to state 204
+
+    $default  reduce using rule 45 (value_list)
+
+    value_list  go to state 245
+
+
+State 230
+
+   44 insert: INSERT INTO ID VALUES LBRACE value value_list RBRACE . SEMICOLON
+
+    SEMICOLON  shift, and go to state 246
+
+
+State 231
+
+   94 condition: ID DOT ID comOp . value
+   96          | ID DOT ID comOp . ID DOT ID
+
+    NUMBER    shift, and go to state 133
+    FLOAT     shift, and go to state 134
+    ID        shift, and go to state 247
+    DATE_STR  shift, and go to state 136
+    SSS       shift, and go to state 137
+
+    value  go to state 248
+
+
+State 232
+
+   95 condition: value comOp ID DOT . ID
+
+    ID  shift, and go to state 249
+
+
+State 233
+
+   89 condition_list: AND condition condition_list .
+
+    $default  reduce using rule 89 (condition_list)
+
+
+State 234
 
    52 update: UPDATE ID SET ID EQ value where SEMICOLON .
 
     $default  reduce using rule 52 (update)
 
 
-State 223
+State 235
 
-  102 load_data: LOAD DATA INFILE SSS INTO TABLE ID SEMICOLON .
+  105 load_data: LOAD DATA INFILE SSS INTO TABLE ID SEMICOLON .
 
-    $default  reduce using rule 102 (load_data)
+    $default  reduce using rule 105 (load_data)
 
 
-State 224
+State 236
 
    36 attr_def: ID_get type LBRACE number RBRACE .
 
     $default  reduce using rule 36 (attr_def)
 
 
-State 225
+State 237
 
    30 create_index: CREATE INDEX ID ON ID LBRACE ID RBRACE SEMICOLON .
 
     $default  reduce using rule 30 (create_index)
 
 
-State 226
+State 238
+
+   66 aggr_func_list: COMMA MAX LBRACE ID . RBRACE aggr_func_list
+
+    RBRACE  shift, and go to state 250
+
+
+State 239
+
+   67 aggr_func_list: COMMA MIN LBRACE ID . RBRACE aggr_func_list
+
+    RBRACE  shift, and go to state 251
+
+
+State 240
+
+   71 aggr_func_list: COMMA COUNT LBRACE NUMBER . RBRACE aggr_func_list
+
+    RBRACE  shift, and go to state 252
+
+
+State 241
+
+   72 aggr_func_list: COMMA COUNT LBRACE ID . RBRACE aggr_func_list
+
+    RBRACE  shift, and go to state 253
+
+
+State 242
+
+   70 aggr_func_list: COMMA COUNT LBRACE STAR . RBRACE aggr_func_list
+
+    RBRACE  shift, and go to state 254
+
+
+State 243
+
+   69 aggr_func_list: COMMA AVG LBRACE ID . RBRACE aggr_func_list
+
+    RBRACE  shift, and go to state 255
+
+
+State 244
+
+   68 aggr_func_list: COMMA SUM LBRACE ID . RBRACE aggr_func_list
+
+    RBRACE  shift, and go to state 256
+
+
+State 245
 
    46 value_list: COMMA value value_list .
 
     $default  reduce using rule 46 (value_list)
 
 
-State 227
+State 246
 
    44 insert: INSERT INTO ID VALUES LBRACE value value_list RBRACE SEMICOLON .
 
     $default  reduce using rule 44 (insert)
 
 
-State 228
+State 247
 
-   93 condition: ID DOT ID comOp ID . DOT ID
+   96 condition: ID DOT ID comOp ID . DOT ID
 
-    DOT  shift, and go to state 231
-
-
-State 229
-
-   91 condition: ID DOT ID comOp value .
-
-    $default  reduce using rule 91 (condition)
+    DOT  shift, and go to state 257
 
 
-State 230
+State 248
 
-   92 condition: value comOp ID DOT ID .
+   94 condition: ID DOT ID comOp value .
 
-    $default  reduce using rule 92 (condition)
-
-
-State 231
-
-   93 condition: ID DOT ID comOp ID DOT . ID
-
-    ID  shift, and go to state 232
+    $default  reduce using rule 94 (condition)
 
 
-State 232
+State 249
 
-   93 condition: ID DOT ID comOp ID DOT ID .
+   95 condition: value comOp ID DOT ID .
 
-    $default  reduce using rule 93 (condition)
+    $default  reduce using rule 95 (condition)
+
+
+State 250
+
+   66 aggr_func_list: COMMA MAX LBRACE ID RBRACE . aggr_func_list
+
+    COMMA  shift, and go to state 151
+
+    $default  reduce using rule 65 (aggr_func_list)
+
+    aggr_func_list  go to state 258
+
+
+State 251
+
+   67 aggr_func_list: COMMA MIN LBRACE ID RBRACE . aggr_func_list
+
+    COMMA  shift, and go to state 151
+
+    $default  reduce using rule 65 (aggr_func_list)
+
+    aggr_func_list  go to state 259
+
+
+State 252
+
+   71 aggr_func_list: COMMA COUNT LBRACE NUMBER RBRACE . aggr_func_list
+
+    COMMA  shift, and go to state 151
+
+    $default  reduce using rule 65 (aggr_func_list)
+
+    aggr_func_list  go to state 260
+
+
+State 253
+
+   72 aggr_func_list: COMMA COUNT LBRACE ID RBRACE . aggr_func_list
+
+    COMMA  shift, and go to state 151
+
+    $default  reduce using rule 65 (aggr_func_list)
+
+    aggr_func_list  go to state 261
+
+
+State 254
+
+   70 aggr_func_list: COMMA COUNT LBRACE STAR RBRACE . aggr_func_list
+
+    COMMA  shift, and go to state 151
+
+    $default  reduce using rule 65 (aggr_func_list)
+
+    aggr_func_list  go to state 262
+
+
+State 255
+
+   69 aggr_func_list: COMMA AVG LBRACE ID RBRACE . aggr_func_list
+
+    COMMA  shift, and go to state 151
+
+    $default  reduce using rule 65 (aggr_func_list)
+
+    aggr_func_list  go to state 263
+
+
+State 256
+
+   68 aggr_func_list: COMMA SUM LBRACE ID RBRACE . aggr_func_list
+
+    COMMA  shift, and go to state 151
+
+    $default  reduce using rule 65 (aggr_func_list)
+
+    aggr_func_list  go to state 264
+
+
+State 257
+
+   96 condition: ID DOT ID comOp ID DOT . ID
+
+    ID  shift, and go to state 265
+
+
+State 258
+
+   66 aggr_func_list: COMMA MAX LBRACE ID RBRACE aggr_func_list .
+
+    $default  reduce using rule 66 (aggr_func_list)
+
+
+State 259
+
+   67 aggr_func_list: COMMA MIN LBRACE ID RBRACE aggr_func_list .
+
+    $default  reduce using rule 67 (aggr_func_list)
+
+
+State 260
+
+   71 aggr_func_list: COMMA COUNT LBRACE NUMBER RBRACE aggr_func_list .
+
+    $default  reduce using rule 71 (aggr_func_list)
+
+
+State 261
+
+   72 aggr_func_list: COMMA COUNT LBRACE ID RBRACE aggr_func_list .
+
+    $default  reduce using rule 72 (aggr_func_list)
+
+
+State 262
+
+   70 aggr_func_list: COMMA COUNT LBRACE STAR RBRACE aggr_func_list .
+
+    $default  reduce using rule 70 (aggr_func_list)
+
+
+State 263
+
+   69 aggr_func_list: COMMA AVG LBRACE ID RBRACE aggr_func_list .
+
+    $default  reduce using rule 69 (aggr_func_list)
+
+
+State 264
+
+   68 aggr_func_list: COMMA SUM LBRACE ID RBRACE aggr_func_list .
+
+    $default  reduce using rule 68 (aggr_func_list)
+
+
+State 265
+
+   96 condition: ID DOT ID comOp ID DOT ID .
+
+    $default  reduce using rule 96 (condition)

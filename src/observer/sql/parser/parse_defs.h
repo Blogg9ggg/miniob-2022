@@ -80,8 +80,17 @@ typedef struct _Condition {
   Value right_value;   // right-hand side value if right_is_attr = FALSE
 } Condition;
 
+// 李立基: 聚合函数
+typedef struct {
+  AggrType type;
+  RelAttr attribute;
+} AggrFunc;
+
 // struct of select
 typedef struct {
+  size_t aggr_func_num;
+  AggrFunc aggr_funcs[MAX_NUM];
+
   int aggr_type;         // 李立基: 标记聚合函数类型
   int aggr_arg_num;      // 李立基: 用于处理聚合函数中以数字为参数的情况(目前主要用于 count 函数). -1, 该字段无效; 0, 该字段为 *
   size_t attr_num;                // Length of attrs in Select clause
@@ -232,6 +241,9 @@ void selects_append_attribute(Selects *selects, RelAttr *rel_attr);
 void selects_append_relation(Selects *selects, const char *relation_name);
 void selects_append_conditions(Selects *selects, Condition conditions[], size_t condition_num);
 void selects_destroy(Selects *selects);
+
+void aggr_func_init(AggrFunc *aggr_func, AggrType type, RelAttr *attribute);
+void selects_append_aggr_func(Selects *selects, AggrFunc *aggr_func);
 
 void inserts_init(Inserts *inserts, const char *relation_name, Value values[], size_t value_num);
 void inserts_destroy(Inserts *inserts);

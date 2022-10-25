@@ -40,6 +40,7 @@ See the Mulan PSL v2 for more details. */
 #include "sql/stmt/delete_stmt.h"
 #include "sql/stmt/insert_stmt.h"
 #include "sql/stmt/filter_stmt.h"
+#include "sql/stmt/aggregate_function.h"
 #include "storage/common/table.h"
 #include "storage/common/field.h"
 #include "storage/index/index.h"
@@ -237,7 +238,7 @@ void end_trx_if_need(Session *session, Trx *trx, bool all_right)
   }
 }
 
-void print_tuple_header(std::ostream &os, const ProjectOperator &oper, const char *aggr_func_name)
+void print_tuple_header(std::ostream &os, const ProjectOperator &oper, const char *aggr_func_name_p)
 {
   const int cell_num = oper.tuple_cell_num();
   if (cell_num != 1) {
@@ -247,7 +248,7 @@ void print_tuple_header(std::ostream &os, const ProjectOperator &oper, const cha
   const TupleCellSpec *cell_spec = nullptr;
   oper.tuple_cell_spec_at(0, cell_spec);
   if (cell_spec->alias()) {
-    os << aggr_func_name << "(" << cell_spec->alias() << ")";
+    os << aggr_func_name_p << "(" << cell_spec->alias() << ")";
   }
 
   if (cell_num > 0) {
@@ -444,7 +445,7 @@ IndexScanOperator *try_to_create_index_scan_operator(FilterStmt *filter_stmt, Ta
 RC do_aggr_func_max(std::ostream &os, ProjectOperator &project_oper)
 {
   RC rc = RC::SUCCESS;
-  print_tuple_header(os, project_oper, "MAX");
+  // print_tuple_header(os, project_oper, "MAX");
 
   rc = project_oper.next();
   if (rc == RC::RECORD_EOF) {
@@ -485,7 +486,7 @@ RC do_aggr_func_max(std::ostream &os, ProjectOperator &project_oper)
   }
   
   max_cell.to_string(os);
-  os << std::endl;
+  // os << std::endl;
   rc = project_oper.close();
 
   return rc;
@@ -498,7 +499,6 @@ RC do_aggr_func_max(std::ostream &os, ProjectOperator &project_oper)
 RC do_aggr_func_min(std::ostream &os, ProjectOperator &project_oper)
 {
   RC rc = RC::SUCCESS;
-  print_tuple_header(os, project_oper, "MIN");
 
   rc = project_oper.next();
   if (rc == RC::RECORD_EOF) {
@@ -539,7 +539,6 @@ RC do_aggr_func_min(std::ostream &os, ProjectOperator &project_oper)
   }
   
   min_cell.to_string(os);
-  os << std::endl;
   rc = project_oper.close();
 
   return rc;
@@ -552,7 +551,6 @@ RC do_aggr_func_min(std::ostream &os, ProjectOperator &project_oper)
 RC do_aggr_func_sum(std::ostream &os, ProjectOperator &project_oper)
 {
   RC rc = RC::SUCCESS;
-  print_tuple_header(os, project_oper, "SUM");
 
   float ans = 0;
   rc = project_oper.next();
@@ -603,7 +601,7 @@ RC do_aggr_func_sum(std::ostream &os, ProjectOperator &project_oper)
     LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
   }
   
-  os << double2string(ans) << std::endl;
+  os << double2string(ans);
   
   rc = project_oper.close();
 
@@ -617,7 +615,6 @@ RC do_aggr_func_sum(std::ostream &os, ProjectOperator &project_oper)
 RC do_aggr_func_avg(std::ostream &os, ProjectOperator &project_oper)
 {
   RC rc = RC::SUCCESS;
-  print_tuple_header(os, project_oper, "AVG");
 
   float ans = 0;
   int cnt = 0;
@@ -671,7 +668,7 @@ RC do_aggr_func_avg(std::ostream &os, ProjectOperator &project_oper)
     LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
   }
   
-  os << double2string(ans/cnt) << std::endl;
+  os << double2string(ans/cnt);
   
   rc = project_oper.close();
 
@@ -704,7 +701,7 @@ RC do_aggr_func_count(std::ostream &os, ProjectOperator &project_oper)
     LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
   }
   
-  os << ans << std::endl;
+  os << ans;
   rc = project_oper.close();
 
   return rc;
@@ -714,33 +711,148 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
 {
   SelectStmt *select_stmt = (SelectStmt *)(sql_event->stmt());
   SessionEvent *session_event = sql_event->session_event();
+  std::stringstream ss;
   RC rc = RC::SUCCESS;
+
   if (select_stmt->tables().size() != 1) {
     // 多表查询
-    FilterStmt *filterStmt = select_stmt->filter_stmt();
-    std::vector<std::vector<Tuple *>> tuples_set;
-    MergeOperator merge_oper(filterStmt);
-    for (const auto &table : select_stmt->tables()) {
-      Operator *scan_oper = try_to_create_index_scan_operator(filterStmt, table);
-      if (nullptr == scan_oper) {
-        scan_oper = new TableScanOperator(table);
-      }
-      PredicateOperator pred_oper(filterStmt);
-      pred_oper.add_child(scan_oper);
-      merge_oper.add_child(&pred_oper);
-    }
-    return rc;
+    // FilterStmt *filterStmt = select_stmt->filter_stmt();
+    // std::vector<std::vector<Tuple *>> tuples_set;
+    // MergeOperator merge_oper(filterStmt);
+    // for (const auto &table : select_stmt->tables()) {
+    //   Operator *scan_oper = try_to_create_index_scan_operator(filterStmt, table);
+    //   if (nullptr == scan_oper) {
+    //     scan_oper = new TableScanOperator(table);
+    //   }
+    //   PredicateOperator pred_oper(filterStmt);
+    //   pred_oper.add_child(scan_oper);
+    //   merge_oper.add_child(&pred_oper);
+    // }
+    return RC::UNIMPLENMENT;
   }
 
+  Table *default_table = select_stmt->tables()[0]; // 单表
   Operator *scan_oper = try_to_create_index_scan_operator(select_stmt->filter_stmt(), select_stmt->tables()[0]);
   if (nullptr == scan_oper) {
     scan_oper = new TableScanOperator(select_stmt->tables()[0]);
   }
-
   DEFER([&]() { delete scan_oper; });
 
   PredicateOperator pred_oper(select_stmt->filter_stmt());
   pred_oper.add_child(scan_oper);
+
+  if (select_stmt->aggr_funcs().size() > 0) {
+    // 李立基: 先打印头部
+    const char *aggr_func_name[] = {"", "MAX", "MIN", "COUNT", "AVG", "SUM"};
+    bool first = true;
+    for(AggrFuncCXX aggr_func : select_stmt->aggr_funcs()) {
+      if (first)  first = false;
+      else  ss << " | ";
+
+      if (aggr_func.type() == aggregation_fun::count_fun) {
+        ss << aggr_func_name[aggr_func.type()] << "(" << aggr_func.count_name() << ")";
+      } else {
+        ss << aggr_func_name[aggr_func.type()] << "(" << aggr_func.field().field_name() << ")";
+      }
+      
+    }
+    ss << std::endl;
+
+    first = true;
+    for(AggrFuncCXX aggr_func : select_stmt->aggr_funcs()) {
+      if (first)  first = false;
+      else  ss << " | ";
+
+      switch (aggr_func.type())
+      {
+      case aggregation_fun::max_fun: {
+        ProjectOperator project_oper;
+        project_oper.add_child(&pred_oper);
+        LOG_INFO("table_name: %s, field_name: %s\n", aggr_func.field().table()->name(), aggr_func.field().meta()->name());
+        project_oper.add_projection(aggr_func.field().table(), aggr_func.field().meta());
+
+        rc = project_oper.open();
+        if (rc != RC::SUCCESS) {
+          LOG_WARN("failed to open operator");
+          return rc;
+        }
+
+        rc = do_aggr_func_max(ss, project_oper);
+
+        project_oper.close();
+      } break;
+      case aggregation_fun::min_fun: {
+        ProjectOperator project_oper;
+        project_oper.add_child(&pred_oper);
+        project_oper.add_projection(aggr_func.field().table(), aggr_func.field().meta());
+
+        rc = project_oper.open();
+        if (rc != RC::SUCCESS) {
+          LOG_WARN("failed to open operator");
+          return rc;
+        }
+
+        rc = do_aggr_func_min(ss, project_oper);
+        project_oper.close();
+      } break;
+      case aggregation_fun::avg_fun: {
+        ProjectOperator project_oper;
+        project_oper.add_child(&pred_oper);
+        project_oper.add_projection(aggr_func.field().table(), aggr_func.field().meta());
+
+        rc = project_oper.open();
+        if (rc != RC::SUCCESS) {
+          LOG_WARN("failed to open operator");
+          return rc;
+        }
+
+        rc = do_aggr_func_avg(ss, project_oper);
+        project_oper.close();
+      } break;
+      case aggregation_fun::sum_fun: {
+        ProjectOperator project_oper;
+        project_oper.add_child(&pred_oper);
+        project_oper.add_projection(aggr_func.field().table(), aggr_func.field().meta());
+
+        rc = project_oper.open();
+        if (rc != RC::SUCCESS) {
+          LOG_WARN("failed to open operator");
+          return rc;
+        }
+
+        rc = do_aggr_func_sum(ss, project_oper);
+        project_oper.close();
+      } break;
+      case aggregation_fun::count_fun: {
+        ProjectOperator project_oper;
+        project_oper.add_child(&pred_oper);
+        
+        // TODO: 这里只考虑单表哦, 直接取第一个 field, 非常粗暴
+        
+        project_oper.add_projection(default_table, default_table->table_meta().field(1));
+        //default_table->table_meta().field(1).meta());
+
+        rc = project_oper.open();
+        if (rc != RC::SUCCESS) {
+          LOG_WARN("failed to open operator");
+          return rc;
+        }
+
+        rc = do_aggr_func_count(ss, project_oper);
+        project_oper.close();
+      } break;
+      
+      default:
+        break;
+      }
+    }
+    ss << std::endl;
+    session_event->set_response(ss.str());
+
+    return RC::SUCCESS;
+  }
+
+  // ============================================
   ProjectOperator project_oper;
   project_oper.add_child(&pred_oper);
   for (const Field &field : select_stmt->query_fields()) {
@@ -752,7 +864,6 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
     return rc;
   }
 
-  std::stringstream ss;
   switch (select_stmt->aggr_fun())
   {
   case aggregation_fun::max_fun: {

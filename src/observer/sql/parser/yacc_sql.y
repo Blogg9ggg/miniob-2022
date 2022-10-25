@@ -389,80 +389,56 @@ select:				/*  select 语句的语法解析树*/
 	;
 
 select_attr:
-	MAX LBRACE ID RBRACE COMMA {
-		// 李立基: 不支持聚合函数与单个字段混合
-		CONTEXT->ssql->flag = SCF_INVALID_ATTR;
-		return -1;
-	}
-	| MIN LBRACE ID RBRACE COMMA {
-		// TODO: 合并?
-		CONTEXT->ssql->flag = SCF_INVALID_ATTR;
-		return -1;
-	}
-	| SUM LBRACE ID RBRACE COMMA {
-		// TODO: 合并?
-		CONTEXT->ssql->flag = SCF_INVALID_ATTR;
-		return -1;
-	}
-	| AVG LBRACE ID RBRACE COMMA {
-		// TODO: 合并?
-		CONTEXT->ssql->flag = SCF_INVALID_ATTR;
-		return -1;
-	}
-	| count_func COMMA {
-		// 李立基: 不支持聚合函数与单个字段混合
-		CONTEXT->ssql->flag = SCF_INVALID_ATTR;
-		return -1;
-	}
-	| MAX LBRACE ID RBRACE {
+	MAX LBRACE ID RBRACE aggr_func_list {
 		RelAttr attr;
 		relation_attr_init(&attr, NULL, $3);
-		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-		// yyerror(scanner, "ju he12");
-		CONTEXT->ssql->sstr.selection.aggr_type = MAX_FUN;
+		AggrFunc func;
+		aggr_func_init(&func, MAX_FUN, &attr);
+		selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 	}
-	| MIN LBRACE ID RBRACE {
+	| MIN LBRACE ID RBRACE aggr_func_list {
 		RelAttr attr;
 		relation_attr_init(&attr, NULL, $3);
-		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-		// yyerror(scanner, "ju he12");
-		CONTEXT->ssql->sstr.selection.aggr_type = MIN_FUN;
+		AggrFunc func;
+		aggr_func_init(&func, MIN_FUN, &attr);
+		selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 	}
-	| SUM LBRACE ID RBRACE {
+	| SUM LBRACE ID RBRACE aggr_func_list {
 		RelAttr attr;
 		relation_attr_init(&attr, NULL, $3);
-		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-		CONTEXT->ssql->sstr.selection.aggr_type = SUM_FUN;
+		AggrFunc func;
+		aggr_func_init(&func, SUM_FUN, &attr);
+		selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 	}
-	| AVG LBRACE ID RBRACE {
+	| AVG LBRACE ID RBRACE aggr_func_list {
 		RelAttr attr;
 		relation_attr_init(&attr, NULL, $3);
-		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-		CONTEXT->ssql->sstr.selection.aggr_type = AVG_FUN;
+		AggrFunc func;
+		aggr_func_init(&func, AVG_FUN, &attr);
+		selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 	}
-	| COUNT LBRACE STAR RBRACE  {
+	| COUNT LBRACE STAR RBRACE aggr_func_list {
 		RelAttr attr;
 		relation_attr_init(&attr, NULL, "*");
-		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-		CONTEXT->ssql->sstr.selection.aggr_type = COUNT_FUN;
-		CONTEXT->ssql->sstr.selection.aggr_arg_num = 0;
+		AggrFunc func;
+		aggr_func_init(&func, COUNT_FUN, &attr);
+		selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 	}
-	| COUNT LBRACE ID RBRACE  {
+	| COUNT LBRACE NUMBER RBRACE aggr_func_list {
+		RelAttr attr;
+		relation_attr_init(&attr, NULL, "1");
+		AggrFunc func;
+		aggr_func_init(&func, COUNT_FUN, &attr);
+		selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
+	}
+	| COUNT LBRACE ID RBRACE aggr_func_list {
 		RelAttr attr;
 		relation_attr_init(&attr, NULL, $3);
-		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-		CONTEXT->ssql->sstr.selection.aggr_type = COUNT_FUN;
-		CONTEXT->ssql->sstr.selection.aggr_arg_num = -1;
+		AggrFunc func;
+		aggr_func_init(&func, COUNT_FUN, &attr);
+		selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 	}
-	| COUNT LBRACE NUMBER RBRACE  {
-		// TODO: count(1)?
-		RelAttr attr;
-		relation_attr_init(&attr, NULL, "*");
-		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-		// yyerror(scanner, "ju he12");
-		CONTEXT->ssql->sstr.selection.aggr_type = COUNT_FUN;
-		CONTEXT->ssql->sstr.selection.aggr_arg_num = 1;
-	}
+
   | STAR {  
 		RelAttr attr;
 		relation_attr_init(&attr, NULL, "*");
@@ -484,6 +460,58 @@ select_attr:
 			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
 		}
     ;
+aggr_func_list:
+		/* empty */
+		| COMMA MAX LBRACE ID RBRACE aggr_func_list {
+			RelAttr attr;
+			relation_attr_init(&attr, NULL, $4);
+			AggrFunc func;
+			aggr_func_init(&func, MAX_FUN, &attr);
+			selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
+		}
+		| COMMA MIN LBRACE ID RBRACE aggr_func_list {
+			RelAttr attr;
+			relation_attr_init(&attr, NULL, $4);
+			AggrFunc func;
+			aggr_func_init(&func, MIN_FUN, &attr);
+			selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
+		}
+		| COMMA SUM LBRACE ID RBRACE aggr_func_list {
+			RelAttr attr;
+			relation_attr_init(&attr, NULL, $4);
+			AggrFunc func;
+			aggr_func_init(&func, SUM_FUN, &attr);
+			selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
+		}
+		| COMMA AVG LBRACE ID RBRACE aggr_func_list {
+			RelAttr attr;
+			relation_attr_init(&attr, NULL, $4);
+			AggrFunc func;
+			aggr_func_init(&func, AVG_FUN, &attr);
+			selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
+		}
+		| COMMA COUNT LBRACE STAR RBRACE aggr_func_list {
+			RelAttr attr;
+			relation_attr_init(&attr, NULL, "*");
+			AggrFunc func;
+			aggr_func_init(&func, COUNT_FUN, &attr);
+			selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
+		}
+		| COMMA COUNT LBRACE NUMBER RBRACE aggr_func_list {
+			RelAttr attr;
+			relation_attr_init(&attr, NULL, "1");
+			AggrFunc func;
+			aggr_func_init(&func, COUNT_FUN, &attr);
+			selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
+		}
+		| COMMA COUNT LBRACE ID RBRACE aggr_func_list {
+			RelAttr attr;
+			relation_attr_init(&attr, NULL, $4);
+			AggrFunc func;
+			aggr_func_init(&func, COUNT_FUN, &attr);
+			selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
+		}
+		;
 attr_list:
     /* empty */
 		| COMMA MAX LBRACE ID RBRACE attr_list {
@@ -536,6 +564,7 @@ count_func:
 	| COUNT LBRACE ID RBRACE {
 
 	}
+	;
 	
 rel_list:
     /* empty */

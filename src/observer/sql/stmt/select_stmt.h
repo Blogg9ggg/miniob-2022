@@ -19,21 +19,12 @@ See the Mulan PSL v2 for more details. */
 #include "rc.h"
 #include "sql/stmt/stmt.h"
 #include "storage/common/field.h"
+#include "aggregate_function.h"
 
 class FieldMeta;
 class FilterStmt;
 class Db;
 class Table;
-
-typedef enum
-{
-  no_fun,
-  max_fun,
-  min_fun,
-  count_fun,
-  avg_fun,
-  sum_fun,
-} aggregation_fun;
 
 class SelectStmt : public Stmt
 {
@@ -49,6 +40,7 @@ public:
 public:
   const std::vector<Table *> &tables() const { return tables_; }
   const std::vector<Field> &query_fields() const { return query_fields_; }
+  const std::vector<AggrFuncCXX> &aggr_funcs() const { return aggr_funcs_; }
   FilterStmt *filter_stmt() const { return filter_stmt_; }
   int aggr_fun() const { return aggr_fun_; }
   int aggr_arg_num() const { return aggr_arg_num_; }
@@ -56,6 +48,7 @@ public:
 private:
   int aggr_fun_;  // 李立基: 加入指示使用什么聚合函数的字段
   int aggr_arg_num_;      // 李立基: 用于处理聚合函数中以数字为参数的情况.
+  std::vector<AggrFuncCXX> aggr_funcs_;
   std::vector<Field> query_fields_;
   std::vector<Table *> tables_;
   FilterStmt *filter_stmt_ = nullptr;

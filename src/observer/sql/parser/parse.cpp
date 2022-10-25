@@ -32,6 +32,17 @@ void relation_attr_init(RelAttr *relation_attr, const char *relation_name, const
   relation_attr->attribute_name = strdup(attribute_name);
 }
 
+void aggr_func_init(AggrFunc *aggr_func, AggrType type, RelAttr *attribute)
+{
+  aggr_func->type = type;
+  aggr_func->attribute = *attribute;
+}
+
+void aggr_func_destroy(AggrFunc *aggr_func)
+{
+  relation_attr_destroy(&aggr_func->attribute);
+}
+
 void relation_attr_destroy(RelAttr *relation_attr)
 {
   free(relation_attr->relation_name);
@@ -143,6 +154,10 @@ void selects_append_attribute(Selects *selects, RelAttr *rel_attr)
 {
   selects->attributes[selects->attr_num++] = *rel_attr;
 }
+void selects_append_aggr_func(Selects *selects, AggrFunc *aggr_func)
+{
+  selects->aggr_funcs[selects->aggr_func_num++] = *aggr_func;
+}
 void selects_append_relation(Selects *selects, const char *relation_name)
 {
   selects->relations[selects->relation_num++] = strdup(relation_name);
@@ -160,6 +175,11 @@ void selects_append_conditions(Selects *selects, Condition conditions[], size_t 
 void selects_destroy(Selects *selects)
 {
   selects->aggr_type = NO_FUN;
+
+  for (size_t i = 0; i < selects->aggr_func_num; i++) {
+    aggr_func_destroy(&selects->aggr_funcs[i]);
+  }
+  selects->aggr_func_num = 0;
   
   for (size_t i = 0; i < selects->attr_num; i++) {
     relation_attr_destroy(&selects->attributes[i]);
