@@ -89,8 +89,9 @@
 
 ```
 create table aggr_table(id int, score float, name char, day date);
-insert into aggr_table values(11, 11, 'A', '2020-10-25');
+insert into aggr_table values(12, 10, 'A', '2020-10-25');
 insert into aggr_table values(10, 10, 'B', '2020-10-26');
+insert into aggr_table values(11, 11, 'C', '2020-10-29');
 
 select MAX(id) from aggr_table;
 select MAX(day) from aggr_table;

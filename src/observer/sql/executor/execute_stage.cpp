@@ -827,8 +827,16 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
         ProjectOperator project_oper;
         project_oper.add_child(&pred_oper);
         
+        const char *field_name = aggr_func.count_name().c_str();
+        if (strcmp(field_name, "*") != 0 && strcmp(field_name, "1") != 0) {
+          if (default_table->table_meta().field(field_name) == nullptr) {
+            session_event->set_response("FAILURE\n");
+
+            return RC::SUCCESS;
+          }
+        }
+
         // TODO: 这里只考虑单表哦, 直接取第一个 field, 非常粗暴
-        
         project_oper.add_projection(default_table, default_table->table_meta().field(1));
         //default_table->table_meta().field(1).meta());
 
