@@ -71,8 +71,11 @@ bool PredicateOperator::do_predicate(RowTuple &tuple)
     CompOp comp = filter_unit->comp();
     TupleCell left_cell;
     TupleCell right_cell;
-    left_expr->get_value(tuple, left_cell);
-    right_expr->get_value(tuple, right_cell);
+    // 为找到则不作为过滤条件
+    if (left_expr->get_value(tuple, left_cell) != RC::SUCCESS)
+      continue;
+    if (right_expr->get_value(tuple, right_cell) != RC::SUCCESS)
+      continue;
 
     if (comp == LIKE || comp == NOT_LIKE) {
       // 李立基: 应该在之前的流程就保证 LIKE 的左右值都是 CHARS

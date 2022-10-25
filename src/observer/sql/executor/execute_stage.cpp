@@ -47,6 +47,7 @@ See the Mulan PSL v2 for more details. */
 #include "storage/trx/trx.h"
 #include "storage/clog/clog.h"
 #include "sql/operator/update_operator.h"
+#include "sql/operator/merge_operator.h"
 
 using namespace common;
 
@@ -292,7 +293,7 @@ void tuple_to_string(std::ostream &os, const Tuple &tuple)
   }
 }
 
-IndexScanOperator *try_to_create_index_scan_operator(FilterStmt *filter_stmt)
+IndexScanOperator *try_to_create_index_scan_operator(FilterStmt *filter_stmt, Table *table)
 {
   const std::vector<FilterUnit *> &filter_units = filter_stmt->filter_units();
   if (filter_units.empty()) {
@@ -326,7 +327,9 @@ IndexScanOperator *try_to_create_index_scan_operator(FilterStmt *filter_stmt)
       continue;
     }
     const Field &field = left_field_expr.field();
-    const Table *table = field.table();
+    if (strcmp(table->name(), field.table()->name()) != 0) {
+      continue;
+    }
     Index *index = table->find_index_by_field(field.field_name());
     if (index != nullptr) {
       if (better_filter == nullptr) {
@@ -374,7 +377,6 @@ IndexScanOperator *try_to_create_index_scan_operator(FilterStmt *filter_stmt)
 
   FieldExpr &left_field_expr = *(FieldExpr *)left;
   const Field &field = left_field_expr.field();
-  const Table *table = field.table();
   Index *index = table->find_index_by_field(field.field_name());
   assert(index != nullptr);
 
@@ -717,12 +719,23 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
   SessionEvent *session_event = sql_event->session_event();
   RC rc = RC::SUCCESS;
   if (select_stmt->tables().size() != 1) {
-    LOG_WARN("select more than 1 tables is not supported");
-    rc = RC::UNIMPLENMENT;
+    // 多表查询
+    FilterStmt *filterStmt = select_stmt->filter_stmt();
+    std::vector<std::vector<Tuple *>> tuples_set;
+    MergeOperator merge_oper(filterStmt);
+    for (const auto &table : select_stmt->tables()) {
+      Operator *scan_oper = try_to_create_index_scan_operator(filterStmt, table);
+      if (nullptr == scan_oper) {
+        scan_oper = new TableScanOperator(table);
+      }
+      PredicateOperator pred_oper(filterStmt);
+      pred_oper.add_child(scan_oper);
+      merge_oper.add_child(&pred_oper);
+    }
     return rc;
   }
 
-  Operator *scan_oper = try_to_create_index_scan_operator(select_stmt->filter_stmt());
+  Operator *scan_oper = try_to_create_index_scan_operator(select_stmt->filter_stmt(), select_stmt->tables()[0]);
   if (nullptr == scan_oper) {
     scan_oper = new TableScanOperator(select_stmt->tables()[0]);
   }
@@ -1022,7 +1035,7 @@ RC ExecuteStage::do_update(SQLStageEvent *sql_event)
 
   UpdateStmt *update_stmt = (UpdateStmt *)stmt;
 
-  Operator *scan_oper = try_to_create_index_scan_operator(update_stmt->filter_stmt());
+  Operator *scan_oper = try_to_create_index_scan_operator(update_stmt->filter_stmt(), update_stmt->table());
   if (nullptr == scan_oper) {
     scan_oper = new TableScanOperator(update_stmt->table());
   }
