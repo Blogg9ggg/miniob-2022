@@ -18,6 +18,7 @@ See the Mulan PSL v2 for more details. */
 
 #include "execute_stage.h"
 
+#include "util/util.h"
 #include "common/io/io.h"
 #include "common/log/log.h"
 #include "common/lang/defer.h"
@@ -602,12 +603,8 @@ RC do_aggr_func_sum(std::ostream &os, ProjectOperator &project_oper)
     LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
   }
   
-  if (attr_type == AttrType::INTS) {
-    os << (int)ans;
-  } else {
-    os << std::fixed << std::setprecision(2) << ans;
-  }
-  os << std::endl;
+  os << double2string(ans) << std::endl;
+  
   rc = project_oper.close();
 
   return rc;
@@ -674,11 +671,7 @@ RC do_aggr_func_avg(std::ostream &os, ProjectOperator &project_oper)
     LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
   }
   
-  if (attr_type == AttrType::INTS && ((int)ans % cnt == 0)) {
-    os << (int)ans / cnt << std::endl;
-  } else {
-    os << std::fixed << std::setprecision(2) << ans/cnt << std::endl;
-  }
+  os << double2string(ans/cnt) << std::endl;
   
   rc = project_oper.close();
 
