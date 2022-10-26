@@ -18,6 +18,7 @@ See the Mulan PSL v2 for more details. */
 
 #include "execute_stage.h"
 
+#include "util/typecast.h"
 #include "util/util.h"
 #include "common/io/io.h"
 #include "common/log/log.h"
@@ -569,14 +570,16 @@ RC do_aggr_func_sum(std::ostream &os, ProjectOperator &project_oper)
     return rc;
   }
   int attr_type = cell.attr_type();
-  if (attr_type != AttrType::INTS && attr_type != AttrType::FLOATS) {
-    LOG_WARN("invalid type for sum().");
-    return rc;
-  }
+  // if (attr_type != AttrType::INTS && attr_type != AttrType::FLOATS) {
+  //   LOG_WARN("invalid type for sum().");
+  //   return rc;
+  // }
   if (attr_type == AttrType::INTS)
-      ans += *(int *)cell.data();
-    else
-      ans += *(float *)cell.data();
+    ans += *(int *)cell.data();
+  else if (attr_type == AttrType::FLOATS)
+    ans += *(float *)cell.data();
+  else if (attr_type == AttrType::CHARS)
+    ans += string2float((const char *)cell.data());
 
   while ((rc = project_oper.next()) == RC::SUCCESS) {
     // get current record
@@ -594,8 +597,10 @@ RC do_aggr_func_sum(std::ostream &os, ProjectOperator &project_oper)
     }
     if (attr_type == AttrType::INTS)
       ans += *(int *)cell.data();
-    else
+    else if (attr_type == AttrType::FLOATS)
       ans += *(float *)cell.data();
+    else if (attr_type == AttrType::CHARS)
+      ans += string2float((const char *)cell.data());
   }
   if (rc != RC::RECORD_EOF) {
     LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
@@ -634,14 +639,16 @@ RC do_aggr_func_avg(std::ostream &os, ProjectOperator &project_oper)
     return rc;
   }
   int attr_type = cell.attr_type();
-  if (attr_type != AttrType::INTS && attr_type != AttrType::FLOATS) {
-    LOG_WARN("invalid type for sum().");
-    return rc;
-  }
+  // if (attr_type != AttrType::INTS && attr_type != AttrType::FLOATS) {
+  //   LOG_WARN("invalid type for sum().");
+  //   return rc;
+  // }
   if (attr_type == AttrType::INTS)
-      ans += *(int *)cell.data();
-  else
+    ans += *(int *)cell.data();
+  else if (attr_type == AttrType::FLOATS)
     ans += *(float *)cell.data();
+  else if (attr_type == AttrType::CHARS)
+    ans += string2float((const char *)cell.data());
   cnt++;
 
   while ((rc = project_oper.next()) == RC::SUCCESS) {
@@ -660,8 +667,10 @@ RC do_aggr_func_avg(std::ostream &os, ProjectOperator &project_oper)
     }
     if (attr_type == AttrType::INTS)
       ans += *(int *)cell.data();
-    else
+    else if (attr_type == AttrType::FLOATS)
       ans += *(float *)cell.data();
+    else if (attr_type == AttrType::CHARS)
+      ans += string2float((const char *)cell.data());
     cnt++;
   }
   if (rc != RC::RECORD_EOF) {
