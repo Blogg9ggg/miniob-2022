@@ -29,12 +29,12 @@ class IndexMeta {
 public:
   IndexMeta() = default;
 
-  RC init(const char *name, const FieldMeta &field);
+  RC init(const char *name, const FieldMeta &field,bool flag);
 
 public:
   const char *name() const;
   const char *field() const;
-
+  const bool  unique() const;
   void desc(std::ostream &os) const;
 
 public:
@@ -44,5 +44,6 @@ public:
 protected:
   std::string name_;   // index's name
   std::string field_;  // field's name
+  bool is_unique;     //小王同学：unique 增加字段区分是否唯一索引
 };
 #endif  // __OBSERVER_STORAGE_COMMON_INDEX_META_H__

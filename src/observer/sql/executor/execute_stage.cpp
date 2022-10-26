@@ -169,6 +169,10 @@ void ExecuteStage::handle_request(common::StageEvent *event)
       case SCF_CREATE_INDEX: {
         do_create_index(sql_event);
       } break;
+      //小王同学: 唯一索引 
+      case SCF_CREATE_UNIQUE_INDEX: {
+         do_create_unique_index(sql_event);
+      } break;
       case SCF_SHOW_TABLES: {
         do_show_tables(sql_event);
       } break;
@@ -944,12 +948,32 @@ RC ExecuteStage::do_create_index(SQLStageEvent *sql_event)
     session_event->set_response("FAILURE\n");
     return RC::SCHEMA_TABLE_NOT_EXIST;
   }
+  RC rc = table->create_index(nullptr, create_index.index_name, create_index.attribute_name,false);
 
-  RC rc = table->create_index(nullptr, create_index.index_name, create_index.attribute_name);
   sql_event->session_event()->set_response(rc == RC::SUCCESS ? "SUCCESS\n" : "FAILURE\n");
   return rc;
 }
+/*
+ * 作者: 小王同学
+ * 说明: 实现 unique index 功能 
+ * #dodo  模仿do_create_index 这2个函数分开实现的。代码不规范
+ */
+RC ExecuteStage::do_create_unique_index(SQLStageEvent *sql_event)
+{
+  SessionEvent *session_event = sql_event->session_event();
+  Db *db = session_event->session()->get_current_db();
+  const CreateIndex &create_index = sql_event->query()->sstr.create_index;
+  Table *table = db->find_table(create_index.relation_name);
+  if (nullptr == table) {
+    session_event->set_response("FAILURE\n");
+    return RC::SCHEMA_TABLE_NOT_EXIST;
+  }
+  // 为了不修改原来的table->create_index 新增了一个函数 create_index 增加一个参数 是否唯一索引 这地方 统一合并了
+  RC rc = table->create_index(nullptr, create_index.index_name, create_index.attribute_name, true);
 
+  sql_event->session_event()->set_response(rc == RC::SUCCESS ? "SUCCESS\n" : "FAILURE\n");
+  return rc;
+}
 /*
  * 作者: 李立基
  * 说明: 实现 show index 功能

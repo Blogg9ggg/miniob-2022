@@ -308,6 +308,10 @@ RC Table::insert_record(Trx *trx, Record *record)
           rc2,
           strrc(rc2));
     }
+    if (rc == RC::RECORD_DUPLICATE_KEY){
+      //小王同学 ：判断insert_entry_of_indexes 返回正确
+      LOG_ERROR(" this is RECORD_DUPLICATE_KEY  table name=%s",name());
+    }
     return rc;
   }
 
@@ -606,8 +610,11 @@ static RC insert_index_record_reader_adapter(Record *record, void *context)
   IndexInserter &inserter = *(IndexInserter *)context;
   return inserter.insert_index(record);
 }
-
-RC Table::create_index(Trx *trx, const char *index_name, const char *attribute_name)
+/*
+ * 作者: 小王同学
+ * 说明: 实现 unique index 功能,增加flag标记参数 true 唯一索引，false 普通索引
+ */
+RC Table::create_index(Trx *trx, const char *index_name, const char *attribute_name,bool flag)
 {
   if (common::is_blank(index_name) || common::is_blank(attribute_name)) {
     LOG_INFO("Invalid input arguments, table name is %s, index_name is blank or attribute_name is blank", name());
@@ -628,7 +635,8 @@ RC Table::create_index(Trx *trx, const char *index_name, const char *attribute_n
   }
 
   IndexMeta new_index_meta;
-  RC rc = new_index_meta.init(index_name, *field_meta);
+  //小王同学: 索引结构在初始化时候 确定 是唯一索引 和普通索引
+  RC rc = new_index_meta.init(index_name, *field_meta,flag);
   if (rc != RC::SUCCESS) {
     LOG_INFO("Failed to init IndexMeta in table:%s, index_name:%s, field_name:%s", name(), index_name, attribute_name);
     return rc;
@@ -883,6 +891,12 @@ RC Table::insert_entry_of_indexes(const char *record, const RID &rid)
 {
   RC rc = RC::SUCCESS;
   for (Index *index : indexes_) {
+    //小王同学：增加日志 区分下唯一索引
+    if (true == index->index_meta().unique()){
+      LOG_INFO(" this is unique index %s:%s", index->index_meta().name(), index->index_meta().field());
+    }else{
+        LOG_INFO(" this is common index %s:%s", index->index_meta().name(), index->index_meta().field());
+    }
     rc = index->insert_entry(record, &rid);
     if (rc != RC::SUCCESS) {
       break;

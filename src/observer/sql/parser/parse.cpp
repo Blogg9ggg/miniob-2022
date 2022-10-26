@@ -428,6 +428,10 @@ void query_reset(Query *query)
     case SCF_CREATE_INDEX: {
       create_index_destroy(&query->sstr.create_index);
     } break;
+    // 小王同学: unique index 资源回收
+    case SCF_CREATE_UNIQUE_INDEX: {
+      create_index_destroy(&query->sstr.create_index);
+    } break;
     // 李立基: show index 资源回收
     case SCF_SHOW_INDEX: {
       show_index_destroy(&query->sstr.show_index);
