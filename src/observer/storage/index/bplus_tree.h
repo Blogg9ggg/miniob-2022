@@ -94,6 +94,46 @@ private:
   AttrComparator attr_comparator_;
 };
 
+//小王同学：唯一索引 判断是否重复
+class KeyComparatorUnique
+{
+public:
+  void init(AttrType type, int length)
+  {
+    attr_comparator_.init(type, length);
+  }
+
+  const AttrComparator &attr_comparator() const {
+    return attr_comparator_;
+  }
+  //
+  int operator() (const char *v1, const char *v2) const {
+    LOG_INFO(">>>>>>>>>>>>>>>>>>KeyComparatorUnique  operator() %p,%p",v1,v2);
+    // 比较2个变量地址，如果变量地址相等 判断重复
+    int result = attr_comparator_(v1, v2);
+   if (0 == result){
+    LOG_INFO(">>>>>>>>>>>>>>>>>>KeyComparatorUnique  RC::RECORD_DUPLICATE_KEY %p,%p",v1,v2);
+    //return RC::RECORD_DUPLICATE_KEY;
+    return 0;
+  }else{
+    LOG_INFO(">>>>>>>>>>>>>>>>>>KeyComparatorUnique  attr_comparator_ %p,%p",v1,v2);
+  }
+    if (result != 0) {
+      return result;
+    }
+    //判断2个变量 位置是否一样
+    // rid1(1,15),rid2:(1,13)
+    //重复内容：不相同行，地址是不同的。
+   //相同的内容，相同地址 才算重复
+   //不太明白 参考 官方文档
+    const RID *rid1 = (const RID *)(v1 + attr_comparator_.attr_length());
+    const RID *rid2 = (const RID *)(v2 + attr_comparator_.attr_length());
+    return RID::compare(rid1, rid2);
+  }
+
+private:
+  AttrComparator attr_comparator_;
+};
 class AttrPrinter
 {
 public:
@@ -299,7 +339,7 @@ public:
    * NOTE: 当前lookup的实现效率非常低，你是否可以优化它?
    */
   int lookup(const KeyComparator &comparator, const char *key, bool *found = nullptr) const;
-
+  int lookup_unique(const KeyComparatorUnique &comparator, const char *key, bool *found = nullptr) const;
   void insert(int index, const char *key, const char *value);
   void remove(int index);
   int  remove(const char *key, const KeyComparator &comparator);
@@ -355,6 +395,9 @@ public:
    */
   int lookup(const KeyComparator &comparator, const char *key,
 	     bool *found = nullptr, int *insert_position = nullptr) const;
+  int lookup_unique(const KeyComparatorUnique &comparator, const char *key,
+	     bool *found = nullptr, int *insert_position = nullptr) const;
+
   
   int max_size() const;
   int min_size() const;
@@ -412,6 +455,7 @@ public:
    * @note 这里假设user_key的内存大小与attr_length 一致
    */
   RC insert_entry(const char *user_key, const RID *rid);
+  RC insert_entry_unique(const char *user_key, const RID *rid);
 
   /**
    * 从IndexHandle句柄对应的索引中删除一个值为（*pData，rid）的索引项
@@ -452,6 +496,7 @@ private:
 
 protected:
   RC find_leaf(const char *key, Frame *&frame);
+  RC find_leaf_unique(const char *key, Frame *&frame);
   RC left_most_page(Frame *&frame);
   RC right_most_page(Frame *&frame);
   RC find_leaf_internal(const std::function<PageNum(InternalIndexNodeHandler &)> &child_page_getter,
@@ -475,6 +520,7 @@ protected:
 
   RC insert_entry_into_parent(Frame *frame, Frame *new_frame, const char *key);
   RC insert_entry_into_leaf_node(Frame *frame, const char *pkey, const RID *rid);
+  RC insert_entry_into_leaf_node_unique(Frame *frame, const char *pkey, const RID *rid);
   RC update_root_page_num();
   RC create_new_tree(const char *key, const RID *rid);
 
@@ -489,6 +535,7 @@ protected:
   IndexFileHeader file_header_;
 
   KeyComparator key_comparator_;
+  KeyComparatorUnique unique_key_comparator_;
   KeyPrinter    key_printer_;
 
   common::MemPoolItem *mem_pool_item_ = nullptr;

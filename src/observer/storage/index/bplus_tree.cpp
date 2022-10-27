@@ -183,6 +183,15 @@ int LeafIndexNodeHandler::lookup(const KeyComparator &comparator, const char *ke
   return iter - iter_begin;
 }
 
+int LeafIndexNodeHandler::lookup_unique(const KeyComparatorUnique &comparator, const char *key, bool *found /* = nullptr */) const
+{
+  const int size = this->size();
+  common::BinaryIterator<char> iter_begin(item_size(), __key_at(0));
+  common::BinaryIterator<char> iter_end(item_size(), __key_at(size));
+  common::BinaryIterator<char> iter = lower_bound(iter_begin, iter_end, key, comparator, found);
+  return iter - iter_begin;
+}
+
 void LeafIndexNodeHandler::insert(int index, const char *key, const char *value)
 {
   if (index < size()) {
@@ -481,6 +490,33 @@ int InternalIndexNodeHandler::lookup(const KeyComparator &comparator, const char
   return ret;
 }
 
+int InternalIndexNodeHandler::lookup_unique(const KeyComparatorUnique &comparator, const char *key,
+				     bool *found /* = nullptr */, int *insert_position /*= nullptr */) const
+{
+  const int size = this->size();
+  if (size == 0) {
+    if (insert_position) {
+      *insert_position = 1;
+    }
+    if (found) {
+      *found = false;
+    }
+    return 0;
+  }
+
+  common::BinaryIterator<char> iter_begin(item_size(), __key_at(1));
+  common::BinaryIterator<char> iter_end(item_size(), __key_at(size));
+  common::BinaryIterator<char> iter = lower_bound(iter_begin, iter_end, key, comparator, found);
+  int ret = static_cast<int>(iter - iter_begin) + 1;
+  if (insert_position) {
+    *insert_position = ret;
+  }
+
+  if (ret >= size || comparator(key, __key_at(ret)) < 0) {
+    return ret - 1;
+  }
+  return ret;
+}
 char *InternalIndexNodeHandler::key_at(int index)
 {
   assert(index >= 0 && index < size());
@@ -800,6 +836,8 @@ RC BplusTreeHandler::create(const char *file_name, AttrType attr_type, int attr_
   }
 
   key_comparator_.init(file_header->attr_type, file_header->attr_length);
+  //小王同学：唯一索引
+  unique_key_comparator_.init(file_header->attr_type, file_header->attr_length);
   key_printer_.init(file_header->attr_type, file_header->attr_length);
   LOG_INFO("Successfully create index %s", file_name);
   return RC::SUCCESS;
@@ -844,6 +882,7 @@ RC BplusTreeHandler::open(const char *file_name)
   disk_buffer_pool->unpin_page(frame);
 
   key_comparator_.init(file_header_.attr_type, file_header_.attr_length);
+  unique_key_comparator_.init(file_header_.attr_type, file_header_.attr_length);
   key_printer_.init(file_header_.attr_type, file_header_.attr_length);
   LOG_INFO("Successfully open index %s", file_name);
   return RC::SUCCESS;
@@ -1092,7 +1131,15 @@ RC BplusTreeHandler::find_leaf(const char *key, Frame *&frame)
 			    },
 			    frame);
 }
-
+//小王同学：internal_node.lookup_unique(unique_key_comparator_, key) 默认没有使用第三个参数 判断是否重复
+RC BplusTreeHandler::find_leaf_unique(const char *key, Frame *&frame)
+{ 
+  return find_leaf_internal(
+			    [&](InternalIndexNodeHandler &internal_node) {
+			      return internal_node.value_at(internal_node.lookup_unique(unique_key_comparator_, key));
+			    },
+			    frame);
+}
 RC BplusTreeHandler::left_most_page(Frame *&frame)
 {
   return find_leaf_internal(
@@ -1195,7 +1242,61 @@ RC BplusTreeHandler::insert_entry_into_leaf_node(Frame *frame, const char *key, 
 
   return insert_entry_into_parent(frame, new_frame, new_index_node.key_at(0));
 }
+//小王同学：唯一索引 lookup_unique 返回是否存在重复元素
+RC BplusTreeHandler::insert_entry_into_leaf_node_unique(Frame *frame, const char *key, const RID *rid)
+{
+  LeafIndexNodeHandler leaf_node(file_header_, frame);
+  bool exists = false;
+  //
+  int insert_position = leaf_node.lookup_unique(unique_key_comparator_, key, &exists);
+  if (exists) {
+    LOG_TRACE("entry exists");
+    //this is err
+    return RC::RECORD_DUPLICATE_KEY;
+  }
+  //一个节点上存储多个元素。
+  if (leaf_node.size() < leaf_node.max_size()) {
+    leaf_node.insert(insert_position, key, (const char *)rid);
+    frame->mark_dirty();
+    disk_buffer_pool_->unpin_page(frame);
+    return RC::SUCCESS;
+  }
 
+  Frame * new_frame = nullptr;
+  RC rc = split<LeafIndexNodeHandler>(frame, new_frame);
+  if (rc != RC::SUCCESS) {
+    LOG_WARN("failed to split leaf node. rc=%d:%s", rc, strrc(rc));
+    return rc;
+  }
+
+  LeafIndexNodeHandler new_index_node(file_header_, new_frame);
+  new_index_node.set_prev_page(frame->page_num());
+  new_index_node.set_next_page(leaf_node.next_page());
+  new_index_node.set_parent_page_num(leaf_node.parent_page_num());
+  leaf_node.set_next_page(new_frame->page_num());
+
+  PageNum next_page_num = new_index_node.next_page();
+  if (next_page_num != BP_INVALID_PAGE_NUM) {
+    Frame * next_frame;
+    rc = disk_buffer_pool_->get_this_page(next_page_num, &next_frame);
+    if (rc != RC::SUCCESS) {
+      LOG_WARN("failed to fetch next page. page num=%d, rc=%d:%s", next_page_num, rc, strrc(rc));
+      return rc;
+    }
+
+    LeafIndexNodeHandler next_node(file_header_, next_frame);
+    next_node.set_prev_page(new_frame->page_num());
+    disk_buffer_pool_->unpin_page(next_frame);
+  }
+
+  if (insert_position < leaf_node.size()) {
+    leaf_node.insert(insert_position, key, (const char *)rid);
+  } else {
+    new_index_node.insert(insert_position - leaf_node.size(), key, (const char *)rid);
+  }
+
+  return insert_entry_into_parent(frame, new_frame, new_index_node.key_at(0));
+}
 RC BplusTreeHandler::insert_entry_into_parent(Frame *frame, Frame *new_frame, const char *key)
 {
   RC rc = RC::SUCCESS;
@@ -1411,6 +1512,59 @@ RC BplusTreeHandler::insert_entry(const char *user_key, const RID *rid)
     disk_buffer_pool_->unpin_page(frame);
     mem_pool_item_->free(key);
     // disk_buffer_pool_->check_all_pages_unpinned(file_id_);
+    return rc;
+  }
+
+  mem_pool_item_->free(key);
+  LOG_TRACE("insert entry success");
+  // disk_buffer_pool_->check_all_pages_unpinned(file_id_);
+  return RC::SUCCESS;
+}
+//小王同学：copy 普通索引的创建,担心 修改唯一索引影响普通索引
+RC BplusTreeHandler::insert_entry_unique(const char *user_key, const RID *rid)
+{
+  if (user_key == nullptr || rid == nullptr) {
+    LOG_WARN("Invalid arguments, key is empty or rid is empty");
+    return RC::INVALID_ARGUMENT;
+  }
+
+  char *key = make_key(user_key, *rid);
+  if (key == nullptr) {
+    LOG_WARN("Failed to alloc memory for key.");
+    return RC::NOMEM;
+  }
+
+  if (is_empty()) {
+    RC rc = create_new_tree(key, rid);
+    mem_pool_item_->free(key);
+    return rc;
+  }
+
+  Frame *frame;
+  //这里没有起到作用是因为 通过 #TODO
+  //return index_handler_.insert_entry_unique(record + field_meta_.offset(), rid); 返回值 无法返回
+  //没有
+  RC rc = find_leaf_unique(key, frame);
+  LOG_INFO(" find_leaf_unique  rc=%d:%s", rc, strrc(rc));
+  if (rc != RC::SUCCESS) {
+    LOG_WARN("Failed to find leaf %s. rc=%d:%s", rid->to_string().c_str(), rc, strrc(rc));
+    mem_pool_item_->free(key);
+    if (rc == RC::RECORD_DUPLICATE_KEY){
+      LOG_WARN("RC::RECORD_DUPLICATE_KEY");
+    }
+    return rc;
+  }
+  //同样逻辑这里发挥了作用
+  rc = insert_entry_into_leaf_node_unique(frame, key, rid);
+  LOG_INFO("insert_entry_into_leaf_node, key=%s rid:%s", key,rid->to_string().c_str());
+  if (rc != RC::SUCCESS) {
+    LOG_TRACE("Failed to insert into leaf of index, rid:%s", rid->to_string().c_str());
+    disk_buffer_pool_->unpin_page(frame);
+    mem_pool_item_->free(key);
+    // disk_buffer_pool_->check_all_pages_unpinned(file_id_);
+    if (rc == RC::RECORD_DUPLICATE_KEY){
+      LOG_WARN("RC::RECORD_DUPLICATE_KEY");
+    }
     return rc;
   }
 
