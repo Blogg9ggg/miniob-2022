@@ -723,34 +723,86 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
   std::stringstream ss;
   RC rc = RC::SUCCESS;
 
+  // =================== 多表查询实验区 ===================
   if (select_stmt->tables().size() != 1) {
-    // 多表查询
-    // FilterStmt *filterStmt = select_stmt->filter_stmt();
-    // std::vector<std::vector<Tuple *>> tuples_set;
-    // MergeOperator merge_oper(filterStmt);
-    // for (const auto &table : select_stmt->tables()) {
-    //   Operator *scan_oper = try_to_create_index_scan_operator(filterStmt, table);
-    //   if (nullptr == scan_oper) {
-    //     scan_oper = new TableScanOperator(table);
-    //   }
-    //   PredicateOperator pred_oper(filterStmt);
-    //   pred_oper.add_child(scan_oper);
-    //   merge_oper.add_child(&pred_oper);
-    // }
+    MergeOperator *merge_oper = new MergeOperator(select_stmt->filter_stmt(), select_stmt->tables().size());
+
+    int tid = 0;
+    for (Table *now_table : select_stmt->tables()) {
+      const TableMeta now_table_meta = now_table->table_meta();
+      const char *now_table_name = now_table->name();
+      merge_oper->update_map(static_cast<std::string>(now_table_name), tid);
+
+      Operator *scan_oper = try_to_create_index_scan_operator(select_stmt->filter_stmt(), now_table);
+      if (nullptr == scan_oper) {
+        scan_oper = new TableScanOperator(now_table);
+      }
+      PredicateOperator pred_oper(select_stmt->filter_stmt());
+      pred_oper.add_child(scan_oper);
+
+      ProjectOperator project_oper;
+      project_oper.add_child(&pred_oper);
+
+      const std::vector<FieldMeta> *field_metas = now_table_meta.field_metas();
+      bool first = true;
+      for (int i = 1; i < field_metas->size(); i++) {
+        // LOG_INFO("field name: %s\n", field.name());
+        project_oper.add_projection(now_table, &((*field_metas)[i]));
+      }
+      
+      rc = project_oper.open();
+      if (rc != RC::SUCCESS) {
+        LOG_WARN("failed to open operator");
+        return rc;
+      }
+
+      while ((rc = project_oper.next()) == RC::SUCCESS) {
+        // get current record
+        // write to response
+        Tuple *tuple = project_oper.current_tuple();
+        if (nullptr == tuple) {
+          rc = RC::INTERNAL;
+          LOG_WARN("failed to get current record. rc=%s", strrc(rc));
+          break;
+        }
+
+        merge_oper->update_lists(tid, tuple);
+
+        // tuple_to_string(ss, *tuple);  // 测试
+        // ss << std::endl;
+      }
+
+      // Endding
+      tid++;
+      // session_event->set_response(ss.str());// 测试
+      rc = project_oper.close();
+      if (rc != RC::SUCCESS) {
+        // TODO
+      }
+      delete scan_oper;
+    }
+    merge_oper->open();
+    std::vector<Tuple *> tmp(10); // 粗糙
+    merge_oper->dfs(ss, 0, tmp);
+    session_event->set_response(ss.str());// 测试
+
     return RC::UNIMPLENMENT;
   }
 
-  Table *default_table = select_stmt->tables()[0]; // 单表
-  Operator *scan_oper = try_to_create_index_scan_operator(select_stmt->filter_stmt(), select_stmt->tables()[0]);
-  if (nullptr == scan_oper) {
-    scan_oper = new TableScanOperator(select_stmt->tables()[0]);
-  }
-  DEFER([&]() { delete scan_oper; });
 
-  PredicateOperator pred_oper(select_stmt->filter_stmt());
-  pred_oper.add_child(scan_oper);
 
+  // 李立基: 由于没有聚合函数和正常查询混合的 case, 故可以将这两个功能分开写.
+  // =================== 聚合函数 ===================
   if (select_stmt->aggr_funcs().size() > 0) {
+    Table *default_table = select_stmt->tables()[0]; // 单表
+    Operator *scan_oper = try_to_create_index_scan_operator(select_stmt->filter_stmt(), select_stmt->tables()[0]);
+    if (nullptr == scan_oper) {
+      scan_oper = new TableScanOperator(select_stmt->tables()[0]);
+    }
+    DEFER([&]() { delete scan_oper; });
+    PredicateOperator pred_oper(select_stmt->filter_stmt());
+    pred_oper.add_child(scan_oper);
+
     // 李立基: 先打印头部
     const char *aggr_func_name[] = {"", "MAX", "MIN", "COUNT", "AVG", "SUM"};
     bool first = true;
@@ -869,7 +921,16 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
     return RC::SUCCESS;
   }
 
-  // ============================================
+  // =================== 正常查询 ===================
+  Table *default_table = select_stmt->tables()[0]; // 单表
+  Operator *scan_oper = try_to_create_index_scan_operator(select_stmt->filter_stmt(), select_stmt->tables()[0]);
+  if (nullptr == scan_oper) {
+    scan_oper = new TableScanOperator(select_stmt->tables()[0]);
+  }
+  DEFER([&]() { delete scan_oper; });
+  PredicateOperator pred_oper(select_stmt->filter_stmt());
+  pred_oper.add_child(scan_oper);
+
   ProjectOperator project_oper;
   project_oper.add_child(&pred_oper);
   for (const Field &field : select_stmt->query_fields()) {
