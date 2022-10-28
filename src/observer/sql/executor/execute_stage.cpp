@@ -448,12 +448,12 @@ IndexScanOperator *try_to_create_index_scan_operator(FilterStmt *filter_stmt, Ta
  * 作者: 李立基
  * 说明: 处理 max 聚合函数
  */
-RC do_aggr_func_max(std::ostream &os, ProjectOperator &project_oper)
+RC do_aggr_func_max(std::ostream &os, ProjectOperator *project_oper)
 {
   RC rc = RC::SUCCESS;
   // print_tuple_header(os, project_oper, "MAX");
 
-  rc = project_oper.next();
+  rc = project_oper->next();
   if (rc == RC::RECORD_EOF) {
     return rc;
   } else if (rc != RC::SUCCESS) {
@@ -461,17 +461,17 @@ RC do_aggr_func_max(std::ostream &os, ProjectOperator &project_oper)
     return rc;
   }
 
-  Tuple *tuple = project_oper.current_tuple();
+  Tuple *tuple = project_oper->current_tuple();
   TupleCell max_cell, cell; 
   if ((rc = tuple->cell_at(0, max_cell)) != RC::SUCCESS) {
     LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
     return rc;
   }
 
-  while ((rc = project_oper.next()) == RC::SUCCESS) {
+  while ((rc = project_oper->next()) == RC::SUCCESS) {
     // get current record
     // write to response
-    tuple = project_oper.current_tuple();
+    tuple = project_oper->current_tuple();
     if (nullptr == tuple) {
       rc = RC::INTERNAL;
       LOG_WARN("failed to get current record. rc=%s", strrc(rc));
@@ -493,20 +493,19 @@ RC do_aggr_func_max(std::ostream &os, ProjectOperator &project_oper)
   
   max_cell.to_string(os);
   // os << std::endl;
-  rc = project_oper.close();
 
-  return rc;
+  return RC::SUCCESS;
 }
 
 /*
  * 作者: 李立基
  * 说明: 处理 min 聚合函数
  */
-RC do_aggr_func_min(std::ostream &os, ProjectOperator &project_oper)
+RC do_aggr_func_min(std::ostream &os, ProjectOperator *project_oper)
 {
   RC rc = RC::SUCCESS;
 
-  rc = project_oper.next();
+  rc = project_oper->next();
   if (rc == RC::RECORD_EOF) {
     return rc;
   } else if (rc != RC::SUCCESS) {
@@ -514,17 +513,17 @@ RC do_aggr_func_min(std::ostream &os, ProjectOperator &project_oper)
     return rc;
   }
 
-  Tuple *tuple = project_oper.current_tuple();
+  Tuple *tuple = project_oper->current_tuple();
   TupleCell min_cell, cell; 
   if ((rc = tuple->cell_at(0, min_cell)) != RC::SUCCESS) {
     LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
     return rc;
   }
 
-  while ((rc = project_oper.next()) == RC::SUCCESS) {
+  while ((rc = project_oper->next()) == RC::SUCCESS) {
     // get current record
     // write to response
-    tuple = project_oper.current_tuple();
+    tuple = project_oper->current_tuple();
     if (nullptr == tuple) {
       rc = RC::INTERNAL;
       LOG_WARN("failed to get current record. rc=%s", strrc(rc));
@@ -545,21 +544,21 @@ RC do_aggr_func_min(std::ostream &os, ProjectOperator &project_oper)
   }
   
   min_cell.to_string(os);
-  rc = project_oper.close();
+  // rc = project_oper.close();
 
-  return rc;
+  return RC::SUCCESS;
 }
 
 /*
  * 作者: 李立基
  * 说明: 处理 sum 聚合函数
  */
-RC do_aggr_func_sum(std::ostream &os, ProjectOperator &project_oper)
+RC do_aggr_func_sum(std::ostream &os, ProjectOperator *project_oper)
 {
   RC rc = RC::SUCCESS;
 
   float ans = 0;
-  rc = project_oper.next();
+  rc = project_oper->next();
   if (rc == RC::RECORD_EOF) {
     os << "0" << std::endl;
     return rc;
@@ -568,7 +567,7 @@ RC do_aggr_func_sum(std::ostream &os, ProjectOperator &project_oper)
     return rc;
   }
 
-  Tuple *tuple = project_oper.current_tuple();
+  Tuple *tuple = project_oper->current_tuple();
   TupleCell cell; 
   if ((rc = tuple->cell_at(0, cell)) != RC::SUCCESS) {
     LOG_ERROR("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
@@ -586,10 +585,10 @@ RC do_aggr_func_sum(std::ostream &os, ProjectOperator &project_oper)
   else if (attr_type == AttrType::CHARS)
     ans += string2float((const char *)cell.data());
 
-  while ((rc = project_oper.next()) == RC::SUCCESS) {
+  while ((rc = project_oper->next()) == RC::SUCCESS) {
     // get current record
     // write to response
-    tuple = project_oper.current_tuple();
+    tuple = project_oper->current_tuple();
     if (nullptr == tuple) {
       rc = RC::INTERNAL;
       LOG_WARN("failed to get current record. rc=%s", strrc(rc));
@@ -612,23 +611,21 @@ RC do_aggr_func_sum(std::ostream &os, ProjectOperator &project_oper)
   }
   
   os << double2string(ans);
-  
-  rc = project_oper.close();
 
-  return rc;
+  return RC::SUCCESS;
 }
 
 /*
  * 作者: 李立基
  * 说明: 处理 avg 聚合函数
  */
-RC do_aggr_func_avg(std::ostream &os, ProjectOperator &project_oper)
+RC do_aggr_func_avg(std::ostream &os, ProjectOperator *project_oper)
 {
   RC rc = RC::SUCCESS;
 
   float ans = 0;
   int cnt = 0;
-  rc = project_oper.next();
+  rc = project_oper->next();
   if (rc == RC::RECORD_EOF) {
     os << "0" << std::endl;
     return rc;
@@ -637,7 +634,7 @@ RC do_aggr_func_avg(std::ostream &os, ProjectOperator &project_oper)
     return rc;
   }
 
-  Tuple *tuple = project_oper.current_tuple();
+  Tuple *tuple = project_oper->current_tuple();
   TupleCell cell; 
   if ((rc = tuple->cell_at(0, cell)) != RC::SUCCESS) {
     LOG_ERROR("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
@@ -656,10 +653,10 @@ RC do_aggr_func_avg(std::ostream &os, ProjectOperator &project_oper)
     ans += string2float((const char *)cell.data());
   cnt++;
 
-  while ((rc = project_oper.next()) == RC::SUCCESS) {
+  while ((rc = project_oper->next()) == RC::SUCCESS) {
     // get current record
     // write to response
-    tuple = project_oper.current_tuple();
+    tuple = project_oper->current_tuple();
     if (nullptr == tuple) {
       rc = RC::INTERNAL;
       LOG_WARN("failed to get current record. rc=%s", strrc(rc));
@@ -683,26 +680,24 @@ RC do_aggr_func_avg(std::ostream &os, ProjectOperator &project_oper)
   }
   
   os << double2string(ans/cnt);
-  
-  rc = project_oper.close();
 
-  return rc;
+  return RC::SUCCESS;
 }
 
 /*
  * 作者: 李立基
  * 说明: 处理 count 聚合函数
  */
-RC do_aggr_func_count(std::ostream &os, ProjectOperator &project_oper)
+RC do_aggr_func_count(std::ostream &os, ProjectOperator *project_oper)
 {
   RC rc = RC::SUCCESS;
 
   Tuple *tuple;
   int ans = 0;
-  while ((rc = project_oper.next()) == RC::SUCCESS) {
+  while ((rc = project_oper->next()) == RC::SUCCESS) {
     // get current record
     // write to response
-    tuple = project_oper.current_tuple();
+    tuple = project_oper->current_tuple();
     if (nullptr == tuple) {
       rc = RC::INTERNAL;
       LOG_WARN("failed to get current record. rc=%s", strrc(rc));
@@ -716,9 +711,8 @@ RC do_aggr_func_count(std::ostream &os, ProjectOperator &project_oper)
   }
   
   os << ans;
-  rc = project_oper.close();
 
-  return rc;
+  return RC::SUCCESS;
 }
 
 RC ExecuteStage::do_select(SQLStageEvent *sql_event)
@@ -733,7 +727,9 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
     CartesianOperator *merge_oper = new CartesianOperator(select_stmt->filter_stmt(), select_stmt->tables().size());
 
     int tid = 0;
-    for (Table *now_table : select_stmt->tables()) {
+    for (int t = 0; t < select_stmt->tables().size(); t++) {
+    // for (int t = select_stmt->tables().size() - 1; t >= 0; t--) {
+      Table *now_table = select_stmt->tables()[t];
       const TableMeta now_table_meta = now_table->table_meta();
       const char *now_table_name = now_table->name();
       merge_oper->update_map(static_cast<std::string>(now_table_name), tid);
@@ -858,7 +854,7 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
           return rc;
         }
 
-        rc = do_aggr_func_max(ss, *project_oper);
+        rc = do_aggr_func_max(ss, project_oper);
 
         project_oper->close();
       } break;
@@ -873,7 +869,7 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
           return rc;
         }
 
-        rc = do_aggr_func_min(ss, *project_oper);
+        rc = do_aggr_func_min(ss, project_oper);
         project_oper->close();
       } break;
       case aggregation_fun::avg_fun: {
@@ -887,7 +883,7 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
           return rc;
         }
 
-        rc = do_aggr_func_avg(ss, *project_oper);
+        rc = do_aggr_func_avg(ss, project_oper);
         project_oper->close();
       } break;
       case aggregation_fun::sum_fun: {
@@ -901,7 +897,7 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
           return rc;
         }
 
-        rc = do_aggr_func_sum(ss, *project_oper);
+        rc = do_aggr_func_sum(ss, project_oper);
         project_oper->close();
       } break;
       case aggregation_fun::count_fun: {
@@ -927,7 +923,7 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
           return rc;
         }
 
-        rc = do_aggr_func_count(ss, *project_oper);
+        rc = do_aggr_func_count(ss, project_oper);
         project_oper->close();
       } break;
       
