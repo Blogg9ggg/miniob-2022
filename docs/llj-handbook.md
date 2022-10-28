@@ -37,31 +37,23 @@
 4. 多表查询测试
 
    ```
-   create table t1(id int, name int);
-   create table t2(id int, money int);
-   insert into t1 values(1, 2);
-   insert into t2 values(1, 1000);
-   select t1.id, t2.money from t1,t2 where t1.id=t2.id;
-   
    create table t1(id int, name char);
    create table t2(id int, money int);
    
    insert into t1 values(1, 'a');
+   insert into t1 values(2, 'b');	// 后
+   
    insert into t2 values(1, 1000);
-   
-   insert into t1 values(2, 'b');
-   
    insert into t2 values(10, 10);
-   insert into t2 values(3, 3000);
+   insert into t2 values(3, 3000);	// 先
    
+   select * from t1, t2;
    select t1.id, t2.money from t1,t2 where t1.id=t2.id;
-   select t2.id, t2.money from t2 where t2.id=t2.money;
-   select t1.id,t1.name,t2.money from t1,t2;
-   select t1.id,t1.name,t2.money from t1,t2 where t1.id=1 AND t2.id=3;
+   select * from t1,t2 where t1.id=1 AND t2.id=3;
    ```
-
    
-
+   
+   
 5. like 测试
 
   ```
@@ -132,5 +124,4 @@ select AVG(id) from aggr_table;
 
 select * from aggr_table;
 ```
-
 

@@ -15,6 +15,7 @@ See the Mulan PSL v2 for more details. */
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include<memory>
 
 #include "execute_stage.h"
 
@@ -50,7 +51,7 @@ See the Mulan PSL v2 for more details. */
 #include "storage/trx/trx.h"
 #include "storage/clog/clog.h"
 #include "sql/operator/update_operator.h"
-#include "sql/operator/merge_operator.h"
+#include "sql/operator/cartesian_operator.h"
 
 using namespace common;
 
@@ -284,7 +285,7 @@ void tuple_to_string(std::ostream &os, const Tuple &tuple)
   TupleCell cell;
   RC rc = RC::SUCCESS;
   bool first_field = true;
-  for (int i = 0; i < tuple.cell_num(); i++) {
+  for (int i = 0; i < tuple.cell_num(); i++) {  // TODO: 改回来
     rc = tuple.cell_at(i, cell);
     if (rc != RC::SUCCESS) {
       LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", i, strrc(rc));
@@ -729,7 +730,7 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
 
   // =================== 多表查询实验区 ===================
   if (select_stmt->tables().size() != 1) {
-    MergeOperator *merge_oper = new MergeOperator(select_stmt->filter_stmt(), select_stmt->tables().size());
+    CartesianOperator *merge_oper = new CartesianOperator(select_stmt->filter_stmt(), select_stmt->tables().size());
 
     int tid = 0;
     for (Table *now_table : select_stmt->tables()) {
@@ -737,40 +738,38 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
       const char *now_table_name = now_table->name();
       merge_oper->update_map(static_cast<std::string>(now_table_name), tid);
 
+      const std::vector<FieldMeta> *field_metas = now_table->table_meta().field_metas();
+      for(int i = 0; i < field_metas->size(); i++) {
+        FieldExpr *field_expr = new FieldExpr(now_table, &field_metas->at(i));
+        TupleCellSpec *tuple_cell_spec = new TupleCellSpec(field_expr);
+        merge_oper->update_speces(tid, tuple_cell_spec);
+      }
+
       Operator *scan_oper = try_to_create_index_scan_operator(select_stmt->filter_stmt(), now_table);
       if (nullptr == scan_oper) {
         scan_oper = new TableScanOperator(now_table);
       }
-      PredicateOperator pred_oper(select_stmt->filter_stmt());
-      pred_oper.add_child(scan_oper);
+      PredicateOperator *pred_oper = new PredicateOperator(select_stmt->filter_stmt());
+      pred_oper->add_child(scan_oper);
 
-      ProjectOperator project_oper;
-      project_oper.add_child(&pred_oper);
+      merge_oper->add_child(pred_oper);
 
-      const std::vector<FieldMeta> *field_metas = now_table_meta.field_metas();
-      bool first = true;
-      for (int i = 1; i < field_metas->size(); i++) {
-        // LOG_INFO("field name: %s\n", field.name());
-        project_oper.add_projection(now_table, &((*field_metas)[i]));
-      }
-      
-      rc = project_oper.open();
-      if (rc != RC::SUCCESS) {
-        LOG_WARN("failed to open operator");
-        return rc;
-      }
-
-      while ((rc = project_oper.next()) == RC::SUCCESS) {
+      pred_oper->open();
+      while ((rc = pred_oper->next()) == RC::SUCCESS) {
         // get current record
         // write to response
-        Tuple *tuple = project_oper.current_tuple();
+        // 由于 TableScanOperator 内部实现的缘故, 这里的 tuple 指针永远不变, 所以需要把里面的数据拷贝出来
+        Tuple *tuple = pred_oper->current_tuple();
+        
         if (nullptr == tuple) {
           rc = RC::INTERNAL;
           LOG_WARN("failed to get current record. rc=%s", strrc(rc));
           break;
         }
 
-        merge_oper->update_lists(tid, tuple);
+        if (merge_oper->update_lists(tid, tuple) != RC::SUCCESS) {
+          LOG_WARN("SOMETHING ERROR.");
+        }
 
         // tuple_to_string(ss, *tuple);  // 测试
         // ss << std::endl;
@@ -779,16 +778,33 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
       // Endding
       tid++;
       // session_event->set_response(ss.str());// 测试
-      rc = project_oper.close();
-      if (rc != RC::SUCCESS) {
-        // TODO
-      }
-      delete scan_oper;
     }
-    merge_oper->open();
-    std::vector<Tuple *> tmp(10); // 粗糙
+
+    ProjectOperator *project_oper = new ProjectOperator();
+    project_oper->add_child(merge_oper);
+
+    project_oper->open();
+    // merge_oper->open();
+
+    // 计算笛卡尔积的结果
+    std::vector<int> tmp(merge_oper->size());
     merge_oper->dfs(ss, 0, tmp);
+    // merge_oper->test(ss);
+    
+    // 开始做映射
+    for (const Field &field : select_stmt->query_fields()) {
+      project_oper->add_projection_CP(field);
+    }
+    project_oper->print_result_CP(ss);
+
     session_event->set_response(ss.str());// 测试
+
+    project_oper->close();
+    delete project_oper;
+    project_oper = nullptr;
+    // merge_oper->close();
+    // delete merge_oper;
+    // merge_oper = nullptr;
 
     return RC::UNIMPLENMENT;
   }
@@ -803,9 +819,9 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
     if (nullptr == scan_oper) {
       scan_oper = new TableScanOperator(select_stmt->tables()[0]);
     }
-    DEFER([&]() { delete scan_oper; });
-    PredicateOperator pred_oper(select_stmt->filter_stmt());
-    pred_oper.add_child(scan_oper);
+    // DEFER([&]() { delete scan_oper; });
+    PredicateOperator *pred_oper = new PredicateOperator(select_stmt->filter_stmt());
+    pred_oper->add_child(scan_oper);
 
     // 李立基: 先打印头部
     const char *aggr_func_name[] = {"", "MAX", "MIN", "COUNT", "AVG", "SUM"};
@@ -831,66 +847,66 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
       switch (aggr_func.type())
       {
       case aggregation_fun::max_fun: {
-        ProjectOperator project_oper;
-        project_oper.add_child(&pred_oper);
-        LOG_INFO("table_name: %s, field_name: %s\n", aggr_func.field().table()->name(), aggr_func.field().meta()->name());
-        project_oper.add_projection(aggr_func.field().table(), aggr_func.field().meta());
+        ProjectOperator *project_oper = new ProjectOperator();
+        project_oper->add_child(pred_oper);
+        // LOG_INFO("table_name: %s, field_name: %s\n", aggr_func.field().table()->name(), aggr_func.field().meta()->name());
+        project_oper->add_projection(aggr_func.field().table(), aggr_func.field().meta());
 
-        rc = project_oper.open();
+        rc = project_oper->open();
         if (rc != RC::SUCCESS) {
           LOG_WARN("failed to open operator");
           return rc;
         }
 
-        rc = do_aggr_func_max(ss, project_oper);
+        rc = do_aggr_func_max(ss, *project_oper);
 
-        project_oper.close();
+        project_oper->close();
       } break;
       case aggregation_fun::min_fun: {
-        ProjectOperator project_oper;
-        project_oper.add_child(&pred_oper);
-        project_oper.add_projection(aggr_func.field().table(), aggr_func.field().meta());
+        ProjectOperator *project_oper = new ProjectOperator();
+        project_oper->add_child(pred_oper);
+        project_oper->add_projection(aggr_func.field().table(), aggr_func.field().meta());
 
-        rc = project_oper.open();
+        rc = project_oper->open();
         if (rc != RC::SUCCESS) {
           LOG_WARN("failed to open operator");
           return rc;
         }
 
-        rc = do_aggr_func_min(ss, project_oper);
-        project_oper.close();
+        rc = do_aggr_func_min(ss, *project_oper);
+        project_oper->close();
       } break;
       case aggregation_fun::avg_fun: {
-        ProjectOperator project_oper;
-        project_oper.add_child(&pred_oper);
-        project_oper.add_projection(aggr_func.field().table(), aggr_func.field().meta());
+        ProjectOperator *project_oper = new ProjectOperator();
+        project_oper->add_child(pred_oper);
+        project_oper->add_projection(aggr_func.field().table(), aggr_func.field().meta());
 
-        rc = project_oper.open();
+        rc = project_oper->open();
         if (rc != RC::SUCCESS) {
           LOG_WARN("failed to open operator");
           return rc;
         }
 
-        rc = do_aggr_func_avg(ss, project_oper);
-        project_oper.close();
+        rc = do_aggr_func_avg(ss, *project_oper);
+        project_oper->close();
       } break;
       case aggregation_fun::sum_fun: {
-        ProjectOperator project_oper;
-        project_oper.add_child(&pred_oper);
-        project_oper.add_projection(aggr_func.field().table(), aggr_func.field().meta());
+        ProjectOperator *project_oper = new ProjectOperator();
+        project_oper->add_child(pred_oper);
+        project_oper->add_projection(aggr_func.field().table(), aggr_func.field().meta());
 
-        rc = project_oper.open();
+        rc = project_oper->open();
         if (rc != RC::SUCCESS) {
           LOG_WARN("failed to open operator");
           return rc;
         }
 
-        rc = do_aggr_func_sum(ss, project_oper);
-        project_oper.close();
+        rc = do_aggr_func_sum(ss, *project_oper);
+        project_oper->close();
       } break;
       case aggregation_fun::count_fun: {
-        ProjectOperator project_oper;
-        project_oper.add_child(&pred_oper);
+        ProjectOperator *project_oper = new ProjectOperator();
+        project_oper->add_child(pred_oper);
         
         const char *field_name = aggr_func.count_name().c_str();
         if (strcmp(field_name, "*") != 0 && strcmp(field_name, "1") != 0) {
@@ -902,17 +918,17 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
         }
 
         // TODO: 这里只考虑单表哦, 直接取第一个 field, 非常粗暴
-        project_oper.add_projection(default_table, default_table->table_meta().field(1));
+        project_oper->add_projection(default_table, default_table->table_meta().field(1));
         //default_table->table_meta().field(1).meta());
 
-        rc = project_oper.open();
+        rc = project_oper->open();
         if (rc != RC::SUCCESS) {
           LOG_WARN("failed to open operator");
           return rc;
         }
 
-        rc = do_aggr_func_count(ss, project_oper);
-        project_oper.close();
+        rc = do_aggr_func_count(ss, *project_oper);
+        project_oper->close();
       } break;
       
       default:
@@ -931,26 +947,26 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
   if (nullptr == scan_oper) {
     scan_oper = new TableScanOperator(select_stmt->tables()[0]);
   }
-  DEFER([&]() { delete scan_oper; });
-  PredicateOperator pred_oper(select_stmt->filter_stmt());
-  pred_oper.add_child(scan_oper);
+  // DEFER([&]() { delete scan_oper; });
+  PredicateOperator *pred_oper = new PredicateOperator(select_stmt->filter_stmt());
+  pred_oper->add_child(scan_oper);
 
-  ProjectOperator project_oper;
-  project_oper.add_child(&pred_oper);
+  ProjectOperator *project_oper = new ProjectOperator();
+  project_oper->add_child(pred_oper);
   for (const Field &field : select_stmt->query_fields()) {
-    project_oper.add_projection(field.table(), field.meta());
+    project_oper->add_projection(field.table(), field.meta());
   }
-  rc = project_oper.open();
+  rc = project_oper->open();
   if (rc != RC::SUCCESS) {
     LOG_WARN("failed to open operator");
     return rc;
   }
 
-  print_tuple_header(ss, project_oper);
-  while ((rc = project_oper.next()) == RC::SUCCESS) {
+  print_tuple_header(ss, *project_oper);
+  while ((rc = project_oper->next()) == RC::SUCCESS) {
     // get current record
     // write to response
-    Tuple *tuple = project_oper.current_tuple();
+    Tuple *tuple = project_oper->current_tuple();
     if (nullptr == tuple) {
       rc = RC::INTERNAL;
       LOG_WARN("failed to get current record. rc=%s", strrc(rc));
@@ -966,7 +982,7 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
   } 
 
   session_event->set_response(ss.str());
-  rc = project_oper.close();
+  rc = project_oper->close();
   
   return rc;
 }

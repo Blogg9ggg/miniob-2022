@@ -50,7 +50,13 @@ RC PredicateOperator::next()
 
 RC PredicateOperator::close()
 {
-  children_[0]->close();
+  if (children_[0] != nullptr) {
+    children_[0]->close();
+    delete children_[0];
+  }
+  
+  children_.clear();
+
   return RC::SUCCESS;
 }
 

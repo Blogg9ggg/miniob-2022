@@ -20,12 +20,16 @@ See the Mulan PSL v2 for more details. */
 class ProjectOperator : public Operator
 {
 public:
-  ProjectOperator()
-  {}
+  ProjectOperator() = default;
 
   virtual ~ProjectOperator() = default;
 
   void add_projection(const Table *table, const FieldMeta *field);
+  
+  // 李立基: CP 结尾代表为笛卡尔积而设
+  RC add_projection_CP(const Field &field);
+  RC print_title_CP(std::ostream &os);
+  RC print_result_CP(std::ostream &os);
 
   RC open() override;
   RC next() override;
@@ -41,4 +45,5 @@ public:
   Tuple * current_tuple() override;
 private:
   ProjectTuple tuple_;
+  std::vector<Field *> fields_CP_;
 };

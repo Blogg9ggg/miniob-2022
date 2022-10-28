@@ -33,6 +33,7 @@ public:
   virtual ~Expression() = default;
   
   virtual RC get_value(const Tuple &tuple, TupleCell &cell) const = 0;
+  virtual const Table *get_table() const = 0;
   virtual ExprType type() const = 0;
 };
 
@@ -45,6 +46,10 @@ public:
 
   virtual ~FieldExpr() = default;
 
+  const Table *get_table() const override
+  {
+    return field_.table();
+  }
   ExprType type() const override
   {
     return ExprType::FIELD;
@@ -89,6 +94,10 @@ public:
   virtual ~ValueExpr() = default;
 
   RC get_value(const Tuple &tuple, TupleCell & cell) const override;
+  const Table *get_table() const override
+  {
+    return nullptr;
+  }
   ExprType type() const override
   {
     return ExprType::VALUE;

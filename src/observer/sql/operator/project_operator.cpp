@@ -13,6 +13,8 @@ See the Mulan PSL v2 for more details. */
 //
 
 #include "common/log/log.h"
+#include "sql/operator/operator.h"
+#include "sql/operator/cartesian_operator.h"
 #include "sql/operator/project_operator.h"
 #include "storage/record/record.h"
 #include "storage/common/table.h"
@@ -41,7 +43,13 @@ RC ProjectOperator::next()
 
 RC ProjectOperator::close()
 {
-  children_[0]->close();
+  if (children_[0] != nullptr) {
+    children_[0]->close();
+    delete children_[0];
+  }
+  
+  children_.clear();
+  
   return RC::SUCCESS;
 }
 Tuple *ProjectOperator::current_tuple()
@@ -62,4 +70,59 @@ void ProjectOperator::add_projection(const Table *table, const FieldMeta *field_
 RC ProjectOperator::tuple_cell_spec_at(int index, const TupleCellSpec *&spec) const
 {
   return tuple_.cell_spec_at(index, spec);
+}
+
+RC ProjectOperator::add_projection_CP(const Field &field) 
+{
+  this->fields_CP_.push_back(const_cast<Field *>(&field));
+  return RC::SUCCESS;
+}
+
+RC ProjectOperator::print_title_CP(std::ostream &os)
+{
+  bool first_field = true;
+  for (Field *field : fields_CP_) {
+    if (first_field) first_field = false;
+    else os << " | ";
+
+    os << field->table_name() << "." << field->field_name();
+  }
+  os << std::endl;
+
+  return RC::SUCCESS;
+}
+
+RC ProjectOperator::print_result_CP(std::ostream &os)
+{
+  print_title_CP(os);
+
+  CartesianOperator *cartesian_oper = dynamic_cast<CartesianOperator *>(this->children_[0]);
+  if (cartesian_oper == nullptr) {
+    LOG_ERROR("isn't a (CartesianOperator *) ptr.");
+    return RC::GENERIC_ERROR;
+  }
+
+  int len = cartesian_oper->result_size();
+  for (int i = 0; i < len; i++) {
+    std::vector<int> tmp_result;
+    cartesian_oper->result_at(i, tmp_result);
+
+
+    for (int j = 0; j < this->fields_CP_.size(); j++) {
+      if (j > 0) {
+        os << " | ";
+      }
+
+      Field &field = *fields_CP_[j];
+      const char *table_name = field.table_name();
+      int table_id = cartesian_oper->table_name2id(table_name);
+      TupleCell cell;
+
+      cartesian_oper->find_cell(field, table_id, tmp_result.at(table_id), cell);
+
+      cell.to_string(os);
+      
+    }
+    os << std::endl;
+  }
 }

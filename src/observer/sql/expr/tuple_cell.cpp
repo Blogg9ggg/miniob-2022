@@ -43,6 +43,7 @@ void TupleCell::to_string(std::ostream &os) const
       }
     } break;
     default: {
+      os << -1;
       LOG_WARN("unsupported attr type: %d", attr_type_);
     } break;
   }

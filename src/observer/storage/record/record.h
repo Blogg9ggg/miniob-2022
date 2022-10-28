@@ -88,6 +88,9 @@ public:
   Record() = default;
   ~Record() = default;
 
+  Record(const Record &rhs) :
+    data_(rhs.data_), rid_(rhs.rid_) { }
+
   void set_data(char *data) { this->data_ = data; }
   char *data() { return this->data_; }
   const char *data() const { return this->data_; }

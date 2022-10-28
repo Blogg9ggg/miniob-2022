@@ -30,6 +30,9 @@ public:
   TupleCellSpec() = default;
   TupleCellSpec(Expression *expr) : expression_(expr)
   {}
+  // TupleCellSpec(const ProjectTuple &obj) const {
+  // TODO: 拷贝构造函数
+  // }
 
   ~TupleCellSpec()
   {
@@ -73,6 +76,19 @@ public:
 class RowTuple : public Tuple {
 public:
   RowTuple() = default;
+  /*
+  Record *record_ = nullptr;
+  const Table *table_ = nullptr;
+  std::vector<TupleCellSpec *> speces_; 
+  */
+  RowTuple(const RowTuple &rhs) :
+    table_(rhs.table_)
+  {
+    record_ = new Record(*rhs.record_);
+    for (TupleCellSpec *tcs : rhs.speces_) {
+      speces_.push_back(tcs);
+    }
+  }
   virtual ~RowTuple()
   {
     for (TupleCellSpec *spec : speces_) {
@@ -97,6 +113,7 @@ public:
 
   int cell_num() const override
   {
+    LOG_INFO("RowTuple object.");
     return speces_.size();
   }
 
@@ -124,10 +141,11 @@ public:
     }
 
     const char *field_name = field.field_name();
+    LOG_INFO("field name = %s", field_name);
     for (size_t i = 0; i < speces_.size(); ++i) {
       const FieldExpr *field_expr = (const FieldExpr *)speces_[i]->expression();
-      const Field &field = field_expr->field();
-      if (0 == strcmp(field_name, field.field_name())) {
+      const Field &field_tmp = field_expr->field();
+      if (0 == strcmp(field_name, field_tmp.field_name())) {
         return cell_at(i, cell);
       }
     }
@@ -220,8 +238,17 @@ private:
 class ProjectTuple : public Tuple {
 public:
   ProjectTuple() = default;
+  ProjectTuple(const ProjectTuple &obj)
+  {
+    tuple_ = obj.tuple_;
+    // for (TupleCellSpec *spec : obj.speces_) {
+    //   specs_.push_back(spec);
+    // }
+    speces_.assign(obj.speces_.begin(), obj.speces_.end());
+  }
   virtual ~ProjectTuple()
   {
+    LOG_INFO("ProjectTuple destruct.");
     for (TupleCellSpec *spec : speces_) {
       delete spec;
     }
@@ -239,6 +266,7 @@ public:
   }
   int cell_num() const override
   {
+    LOG_INFO("ProjectTuple object.");
     return speces_.size();
   }
 
