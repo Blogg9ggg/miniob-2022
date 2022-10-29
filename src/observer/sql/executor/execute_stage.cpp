@@ -727,8 +727,8 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
     CartesianOperator *merge_oper = new CartesianOperator(select_stmt->filter_stmt(), select_stmt->tables().size());
 
     int tid = 0;
-    for (int t = 0; t < select_stmt->tables().size(); t++) {
-    // for (int t = select_stmt->tables().size() - 1; t >= 0; t--) {
+    // for (int t = 0; t < select_stmt->tables().size(); t++) {
+    for (int t = select_stmt->tables().size() - 1; t >= 0; t--) {
       Table *now_table = select_stmt->tables()[t];
       const TableMeta now_table_meta = now_table->table_meta();
       const char *now_table_name = now_table->name();
@@ -856,7 +856,8 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
 
         rc = do_aggr_func_max(ss, project_oper);
 
-        project_oper->close();
+        delete project_oper;
+        project_oper = nullptr;
       } break;
       case aggregation_fun::min_fun: {
         ProjectOperator *project_oper = new ProjectOperator();
@@ -870,7 +871,9 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
         }
 
         rc = do_aggr_func_min(ss, project_oper);
-        project_oper->close();
+        
+        delete project_oper;
+        project_oper = nullptr;
       } break;
       case aggregation_fun::avg_fun: {
         ProjectOperator *project_oper = new ProjectOperator();
@@ -884,7 +887,9 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
         }
 
         rc = do_aggr_func_avg(ss, project_oper);
-        project_oper->close();
+        
+        delete project_oper;
+        project_oper = nullptr;
       } break;
       case aggregation_fun::sum_fun: {
         ProjectOperator *project_oper = new ProjectOperator();
@@ -898,7 +903,9 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
         }
 
         rc = do_aggr_func_sum(ss, project_oper);
-        project_oper->close();
+        
+        delete project_oper;
+        project_oper = nullptr;
       } break;
       case aggregation_fun::count_fun: {
         ProjectOperator *project_oper = new ProjectOperator();
@@ -909,6 +916,7 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
           if (default_table->table_meta().field(field_name) == nullptr) {
             session_event->set_response("FAILURE\n");
 
+            delete project_oper;
             return RC::SUCCESS;
           }
         }
@@ -920,11 +928,15 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
         rc = project_oper->open();
         if (rc != RC::SUCCESS) {
           LOG_WARN("failed to open operator");
+
+          delete project_oper;
           return rc;
         }
 
         rc = do_aggr_func_count(ss, project_oper);
-        project_oper->close();
+        
+        delete project_oper;
+        project_oper = nullptr;
       } break;
       
       default:

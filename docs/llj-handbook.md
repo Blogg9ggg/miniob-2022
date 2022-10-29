@@ -39,13 +39,16 @@
    ```
    create table t1(id int, name char);
    create table t2(id int, money int);
+   create table t3(id int, day date);
    
    insert into t1 values(1, 'a');
-   insert into t1 values(2, 'b');	// 后
+   insert into t1 values(2, 'b');
    
    insert into t2 values(1, 1000);
    insert into t2 values(10, 10);
-   insert into t2 values(3, 3000);	// 先
+   
+   insert into t3 values(3, '2022-10-28');
+   insert into t3 values(2, '2022-10-29');
    
    select * from t1, t2;
    select t1.id, t2.money from t1,t2 where t1.id=t2.id;
