@@ -16,16 +16,23 @@ See the Mulan PSL v2 for more details. */
 #include "common/log/log.h"
 #include "storage/common/db.h"
 #include "storage/common/table.h"
+//小王同学：⼀次插入多条数据 
+//InsertStmt::InsertStmt(Table *table, const Value *values, int value_amount)
+//    : table_(table), values_(values), value_amount_(value_amount)
+//{}
 
-InsertStmt::InsertStmt(Table *table, const Value *values, int value_amount)
-    : table_(table), values_(values), value_amount_(value_amount)
+InsertStmt::InsertStmt(Table *table, const Valuesitem *values_item, int values_amount)
+    : table_(table), values_item_(values_item), values_amount_(values_amount)
 {}
-
+//小王同学：⼀次插入多条数据 
+//input: inserts
+//output:stmt
 RC InsertStmt::create(Db *db, Inserts &inserts, Stmt *&stmt)
 {
   const char *table_name = inserts.relation_name;
-  if (nullptr == db || nullptr == table_name || inserts.value_num <= 0) {
-    LOG_WARN("invalid argument. db=%p, table_name=%p, value_num=%d", db, table_name, inserts.value_num);
+  //可能存在个（），（）
+  if (nullptr == db || nullptr == table_name || inserts.values_num <= 0) {
+    LOG_WARN("invalid argument. db=%p, table_name=%p, value_num=%d", db, table_name, inserts.values_num);
     return RC::INVALID_ARGUMENT;
   }
 
@@ -35,12 +42,17 @@ RC InsertStmt::create(Db *db, Inserts &inserts, Stmt *&stmt)
     LOG_WARN("no such table. db=%s, table_name=%s", db->name(), table_name);
     return RC::SCHEMA_TABLE_NOT_EXIST;
   }
-
+  //小王同学：⼀次插入多条数据 
   // check the fields number
-  Value *values = inserts.values;
-  const int value_num = inserts.value_num;
+  //Value *values = inserts.values;
+  //const int value_num = inserts.value_num;
+  // values_num >1
+  Value *values = inserts.values_item[0].values;
+  const int value_num = inserts.values_item[0].value_num; 
+
   const TableMeta &table_meta = table->table_meta();
   const int field_num = table_meta.field_num() - table_meta.sys_field_num();
+  //插入元素个数 和列个数必须相等
   if (field_num != value_num) {
     LOG_WARN("schema mismatch. value num=%d, field num in schema=%d", value_num, field_num);
     return RC::SCHEMA_FIELD_MISSING;
@@ -50,8 +62,8 @@ RC InsertStmt::create(Db *db, Inserts &inserts, Stmt *&stmt)
   const int sys_field_num = table_meta.sys_field_num();
   for (int i = 0; i < value_num; i++) {
     const FieldMeta *field_meta = table_meta.field(i + sys_field_num);
-    const AttrType field_type = field_meta->type();
-    const AttrType value_type = values[i].type;
+    const AttrType field_type = field_meta->type(); //表的列的类型
+    const AttrType value_type = values[i].type; //插入元素类型
 
     // 类型不相同则将值转化为属性类型
     if (field_type != value_type) {
@@ -68,6 +80,7 @@ RC InsertStmt::create(Db *db, Inserts &inserts, Stmt *&stmt)
   }
 
   // everything alright
-  stmt = new InsertStmt(table, values, value_num);
+  //stmt = new InsertStmt(table, values, value_num);
+  stmt = new InsertStmt(table, inserts.values_item, inserts.values_num);
   return RC::SUCCESS;
 }

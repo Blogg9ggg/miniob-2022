@@ -44,7 +44,9 @@ void yyerror(yyscan_t scanner, const char *str)
   context->from_length = 0;
   context->select_length = 0;
   context->value_length = 0;
-  context->ssql->sstr.insertion.value_num = 0;
+  //小王同学：多列插入
+  //context->ssql->sstr.insertion.value_num = 0;
+  context->ssql->sstr.insertion.values_num = 0;
   printf("parse sql failed. error=%s", str);
 }
 
@@ -316,7 +318,9 @@ ID_get:
 
 	
 insert:				/*insert   语句的语法解析树*/
-    INSERT INTO ID VALUES LBRACE value value_list RBRACE SEMICOLON 
+    //INSERT INTO ID VALUES LBRACE value value_list RBRACE SEMICOLON 
+	//小王同学：insert
+	INSERT INTO ID VALUES tuple tuple_list SEMICOLON 
 		{
 			// CONTEXT->values[CONTEXT->value_length++] = *$6;
 
@@ -326,11 +330,33 @@ insert:				/*insert   语句的语法解析树*/
 			// for(i = 0; i < CONTEXT->value_length; i++){
 			// 	CONTEXT->ssql->sstr.insertion.values[i] = CONTEXT->values[i];
       // }
-			inserts_init(&CONTEXT->ssql->sstr.insertion, $3, CONTEXT->values, CONTEXT->value_length);
+		//inserts_init(&CONTEXT->ssql->sstr.insertion, $3, CONTEXT->values, CONTEXT->value_length);
+		//只获取表名 ID
+		inserts_init_table_name(&CONTEXT->ssql->sstr.insertion, $3);
+		
 
       //临时变量清零
       CONTEXT->value_length=0;
     }
+//小王同学：12 ⼀次插入多条数据 insert
+tuple:
+	LBRACE value value_list RBRACE
+	{
+       //inserts_init(&CONTEXT->ssql->sstr.insertion, $3, CONTEXT->values, CONTEXT->value_length);
+        
+		//（id1,id2,id3） ===values put to insertion
+	   	inserts_init_appends_rows_values(&CONTEXT->ssql->sstr.insertion,CONTEXT->values,CONTEXT->value_length);
+
+		CONTEXT->value_length = 0;
+
+
+	};
+//小王同学:12 ⼀次插入多条数据 insert
+tuple_list:
+  /* empty */
+    | COMMA tuple tuple_list  { 
+	  }
+    ;
 
 value_list:
     /* empty */

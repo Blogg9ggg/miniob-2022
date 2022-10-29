@@ -344,7 +344,7 @@ RC Table::recover_insert_record(Record *record)
 
   return rc;
 }
-
+//小王同学：insert 不在原来函数上修改
 RC Table::insert_record(Trx *trx, int value_num, const Value *values)
 {
   if (value_num <= 0 || nullptr == values) {
@@ -363,6 +363,48 @@ RC Table::insert_record(Trx *trx, int value_num, const Value *values)
   record.set_data(record_data);
   rc = insert_record(trx, &record);
   delete[] record_data;
+  return rc;
+}
+//小王同学：insert 不在原来函数上修改
+RC Table::insert_record_mult_rows(Trx *trx, int values_num, const Valuesitem *values_array)
+{ 
+  RC rc = RC::SUCCESS;
+
+  if (values_num <= 0 || nullptr == values_array) {
+    LOG_ERROR("Invalid argument. table name: %s, value num=%d, values=%p", name(), values_num, values_array);
+    return RC::INVALID_ARGUMENT;
+  }
+  
+  char *pRecordDataArray[values_num]; //指针数组
+  memset(pRecordDataArray, 0, sizeof(pRecordDataArray));
+  for (int rows = 0; rows < values_num; rows++)
+  {
+    int value_num = values_array[rows].value_num;
+    const Value *values = values_array[rows].values;
+
+    rc = make_record(value_num, values, pRecordDataArray[rows]);
+    if (rc != RC::SUCCESS)
+    {
+      LOG_ERROR("Failed to create a record. rc=%d:%s", rc, strrc(rc));
+      return rc;
+    }
+  }
+
+  bool is_all_true =true;
+  for (int rows = 0; rows < values_num; rows++)
+  {
+    Record record;
+    record.set_data(pRecordDataArray[rows]);
+    rc = insert_record(trx, &record);
+    if (rc != RC::SUCCESS)
+    {
+      LOG_ERROR("insert_record rc=%d:%s", rc, strrc(rc));
+      is_all_true =false;
+      return rc;
+    }
+    delete[] pRecordDataArray[rows];
+  }
+
   return rc;
 }
 

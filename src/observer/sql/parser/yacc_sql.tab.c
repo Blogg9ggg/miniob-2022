@@ -113,7 +113,9 @@ void yyerror(yyscan_t scanner, const char *str)
   context->from_length = 0;
   context->select_length = 0;
   context->value_length = 0;
-  context->ssql->sstr.insertion.value_num = 0;
+  //小王同学：多列插入
+  //context->ssql->sstr.insertion.value_num = 0;
+  context->ssql->sstr.insertion.values_num = 0;
   printf("parse sql failed. error=%s", str);
 }
 
@@ -125,7 +127,7 @@ ParserContext *get_context(yyscan_t scanner)
 #define CONTEXT get_context(scanner)
 
 
-#line 129 "yacc_sql.tab.c"
+#line 131 "yacc_sql.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -237,21 +239,23 @@ enum yysymbol_kind_t
   YYSYMBOL_type = 81,                      /* type  */
   YYSYMBOL_ID_get = 82,                    /* ID_get  */
   YYSYMBOL_insert = 83,                    /* insert  */
-  YYSYMBOL_value_list = 84,                /* value_list  */
-  YYSYMBOL_value = 85,                     /* value  */
-  YYSYMBOL_delete = 86,                    /* delete  */
-  YYSYMBOL_update = 87,                    /* update  */
-  YYSYMBOL_select = 88,                    /* select  */
-  YYSYMBOL_select_attr = 89,               /* select_attr  */
-  YYSYMBOL_aggr_func_list = 90,            /* aggr_func_list  */
-  YYSYMBOL_attr_list = 91,                 /* attr_list  */
-  YYSYMBOL_count_func = 92,                /* count_func  */
-  YYSYMBOL_rel_list = 93,                  /* rel_list  */
-  YYSYMBOL_where = 94,                     /* where  */
-  YYSYMBOL_condition_list = 95,            /* condition_list  */
-  YYSYMBOL_condition = 96,                 /* condition  */
-  YYSYMBOL_comOp = 97,                     /* comOp  */
-  YYSYMBOL_load_data = 98                  /* load_data  */
+  YYSYMBOL_tuple = 84,                     /* tuple  */
+  YYSYMBOL_tuple_list = 85,                /* tuple_list  */
+  YYSYMBOL_value_list = 86,                /* value_list  */
+  YYSYMBOL_value = 87,                     /* value  */
+  YYSYMBOL_delete = 88,                    /* delete  */
+  YYSYMBOL_update = 89,                    /* update  */
+  YYSYMBOL_select = 90,                    /* select  */
+  YYSYMBOL_select_attr = 91,               /* select_attr  */
+  YYSYMBOL_aggr_func_list = 92,            /* aggr_func_list  */
+  YYSYMBOL_attr_list = 93,                 /* attr_list  */
+  YYSYMBOL_count_func = 94,                /* count_func  */
+  YYSYMBOL_rel_list = 95,                  /* rel_list  */
+  YYSYMBOL_where = 96,                     /* where  */
+  YYSYMBOL_condition_list = 97,            /* condition_list  */
+  YYSYMBOL_condition = 98,                 /* condition  */
+  YYSYMBOL_comOp = 99,                     /* comOp  */
+  YYSYMBOL_load_data = 100                 /* load_data  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -561,16 +565,16 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  2
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   263
+#define YYLAST   268
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  61
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  38
+#define YYNNTS  40
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  108
+#define YYNRULES  111
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  276
+#define YYNSTATES  281
 
 /* YYMAXUTOK -- Last valid token kind.  */
 #define YYMAXUTOK   315
@@ -625,17 +629,18 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   143,   143,   145,   149,   150,   151,   152,   153,   154,
-     155,   156,   157,   158,   159,   160,   161,   162,   163,   164,
-     165,   166,   167,   171,   176,   181,   187,   193,   199,   205,
-     211,   217,   224,   232,   240,   248,   256,   265,   267,   271,
-     282,   301,   304,   305,   306,   307,   310,   319,   335,   337,
-     342,   345,   348,   355,   363,   373,   383,   402,   409,   416,
-     423,   430,   437,   444,   452,   457,   462,   467,   473,   475,
-     482,   489,   496,   503,   510,   517,   525,   527,   532,   537,
-     542,   547,   552,   559,   568,   571,   574,   579,   581,   585,
-     587,   591,   593,   598,   619,   639,   659,   681,   702,   723,
-     745,   746,   747,   748,   749,   750,   751,   752,   756
+       0,   145,   145,   147,   151,   152,   153,   154,   155,   156,
+     157,   158,   159,   160,   161,   162,   163,   164,   165,   166,
+     167,   168,   169,   173,   178,   183,   189,   195,   201,   207,
+     213,   219,   226,   234,   242,   250,   258,   267,   269,   273,
+     284,   303,   306,   307,   308,   309,   312,   323,   343,   355,
+     357,   361,   363,   368,   371,   374,   381,   389,   399,   409,
+     428,   435,   442,   449,   456,   463,   470,   478,   483,   488,
+     493,   499,   501,   508,   515,   522,   529,   536,   543,   551,
+     553,   558,   563,   568,   573,   578,   585,   594,   597,   600,
+     605,   607,   611,   613,   617,   619,   624,   645,   665,   685,
+     707,   728,   749,   771,   772,   773,   774,   775,   776,   777,
+     778,   782
 };
 #endif
 
@@ -663,9 +668,9 @@ static const char *const yytname[] =
   "rollback", "drop_table", "show_tables", "desc_table", "create_index",
   "create_unique_index", "drop_index", "show_index", "create_table",
   "attr_def_list", "attr_def", "number", "type", "ID_get", "insert",
-  "value_list", "value", "delete", "update", "select", "select_attr",
-  "aggr_func_list", "attr_list", "count_func", "rel_list", "where",
-  "condition_list", "condition", "comOp", "load_data", YY_NULLPTR
+  "tuple", "tuple_list", "value_list", "value", "delete", "update",
+  "select", "select_attr", "aggr_func_list", "attr_list", "count_func",
+  "rel_list", "where", "condition_list", "condition", "comOp", "load_data", YY_NULLPTR
 };
 
 static const char *
@@ -704,34 +709,35 @@ static const yytype_int16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-    -137,    11,  -137,     4,    27,    65,   -21,     6,    33,    19,
-      21,    -6,    47,    62,    66,    68,    77,    22,  -137,  -137,
+    -137,    11,  -137,     4,    27,    53,   -37,     6,    24,     7,
+       3,    -7,    46,    49,    60,    67,    76,    50,  -137,  -137,
     -137,  -137,  -137,  -137,  -137,  -137,  -137,  -137,  -137,  -137,
-    -137,  -137,  -137,  -137,  -137,  -137,  -137,  -137,    26,    29,
-      74,    31,    36,    76,    79,    81,    85,    94,    -1,   103,
-      91,   136,   137,   110,  -137,    57,    95,   115,  -137,  -137,
-    -137,  -137,  -137,   113,   138,   120,   101,   161,   162,   111,
-     112,     5,   114,   116,    83,   117,  -137,  -137,   118,  -137,
-    -137,   119,   140,   143,   121,   122,   123,   124,   133,  -137,
-    -137,   160,   164,   165,   166,   167,   168,   169,   171,   172,
-     173,   174,   175,     1,   103,   103,   176,   189,   177,    18,
-     192,   155,   170,  -137,   179,    84,   182,   145,   183,   183,
-     183,   183,   183,   183,   183,   147,   148,    13,   149,   150,
-     151,  -137,  -137,  -137,   152,   143,  -137,    56,  -137,  -137,
-       0,  -137,  -137,    86,   178,  -137,    56,   202,   123,   193,
-    -137,  -137,  -137,  -137,   196,   154,   197,   109,  -137,  -137,
-    -137,  -137,  -137,  -137,  -137,   198,   199,   200,   201,   203,
-     204,   205,   103,   176,   211,   206,   180,   185,  -137,  -137,
-    -137,  -137,  -137,  -137,  -137,    30,    41,    18,  -137,   143,
-     181,   179,   216,   184,   209,   186,   207,   212,   213,   214,
-     215,   103,   103,  -137,  -137,  -137,   103,   103,  -137,  -137,
-    -137,    56,   210,    86,  -137,  -137,  -137,   217,  -137,   178,
-     230,   231,  -137,  -137,  -137,   220,   235,   222,   187,   188,
-      15,   191,   194,  -137,  -137,  -137,  -137,   206,   237,    45,
-     195,  -137,  -137,  -137,  -137,  -137,   241,   234,   236,   238,
-     239,   240,   242,   243,  -137,  -137,   219,  -137,  -137,  -137,
-     183,   183,   183,   183,   183,   183,   183,   208,  -137,  -137,
-    -137,  -137,  -137,  -137,  -137,  -137
+    -137,  -137,  -137,  -137,  -137,  -137,  -137,  -137,    28,    33,
+      83,    38,    42,    86,    95,    97,    98,   124,     1,   123,
+     111,   140,   141,   115,  -137,    90,    99,   125,  -137,  -137,
+    -137,  -137,  -137,   119,   142,   127,   108,   161,   162,   112,
+     113,     2,   116,   117,    75,   118,  -137,  -137,   120,  -137,
+    -137,   121,   136,   137,   122,   126,   128,   130,   135,  -137,
+    -137,   157,   163,   164,   165,   169,   170,   171,   173,   174,
+     175,   176,   177,    47,   123,   123,   160,   191,   179,    19,
+     193,   138,   168,  -137,   180,   114,   183,   145,   184,   184,
+     184,   184,   184,   184,   184,   146,   148,     5,   149,   150,
+     151,  -137,  -137,  -137,   152,   137,  -137,    52,   190,  -137,
+    -137,     0,  -137,  -137,    77,   178,  -137,    52,   203,   128,
+     195,  -137,  -137,  -137,  -137,   194,   158,   198,    81,  -137,
+    -137,  -137,  -137,  -137,  -137,  -137,   199,   200,   201,   202,
+     204,   205,   206,   123,   160,   212,   207,   179,   217,   172,
+     186,  -137,  -137,  -137,  -137,  -137,  -137,  -137,    23,    37,
+      19,  -137,   137,   181,   180,   221,   182,   211,   185,   213,
+     215,   216,   218,   219,   123,   123,  -137,  -137,  -137,   123,
+     123,  -137,  -137,  -137,    52,   220,   190,  -137,    77,  -137,
+    -137,  -137,   210,  -137,   178,   230,   236,  -137,  -137,  -137,
+     224,   239,   226,   189,   192,    14,   196,   197,  -137,  -137,
+    -137,  -137,   207,  -137,  -137,    41,   208,  -137,  -137,  -137,
+    -137,  -137,   242,   229,   231,   232,   233,   237,   238,   240,
+    -137,   225,  -137,  -137,  -137,   184,   184,   184,   184,   184,
+     184,   184,   209,  -137,  -137,  -137,  -137,  -137,  -137,  -137,
+    -137
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -743,48 +749,49 @@ static const yytype_int8 yydefact[] =
        0,     0,     0,     0,     0,     0,     0,     0,     3,    22,
       21,    16,    17,    18,    19,     9,    10,    11,    12,    13,
       14,    15,     8,     5,     7,     6,     4,    20,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,    76,    64,
+       0,     0,     0,     0,     0,     0,     0,     0,    79,    67,
        0,     0,     0,     0,    25,     0,     0,     0,    26,    27,
       28,    24,    23,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,    66,    65,     0,    31,
-      30,     0,     0,    89,     0,     0,     0,     0,     0,    29,
+       0,     0,     0,     0,     0,     0,    69,    68,     0,    31,
+      30,     0,     0,    92,     0,     0,     0,     0,     0,    29,
       34,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,    76,    76,    76,    87,     0,     0,     0,
-       0,     0,     0,    46,    37,     0,     0,     0,    68,    68,
-      68,    68,    68,    68,    68,     0,     0,     0,     0,     0,
-       0,    82,    81,    67,     0,    89,    35,     0,    50,    51,
-       0,    52,    53,     0,    91,    54,     0,     0,     0,     0,
-      42,    43,    44,    45,    40,     0,     0,     0,    57,    58,
-      62,    63,    61,    60,    59,     0,     0,     0,     0,     0,
-       0,     0,    76,    87,     0,    48,     0,     0,   107,   100,
-     101,   102,   103,   104,   105,     0,     0,     0,    90,    89,
-       0,    37,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,    76,    76,    85,    86,    84,    76,    76,    83,    88,
-      56,     0,     0,     0,   106,    95,    93,    96,    94,    91,
-       0,     0,    38,    36,    41,     0,     0,     0,     0,     0,
-       0,     0,     0,    77,    78,    80,    79,    48,     0,     0,
-       0,    92,    55,   108,    39,    32,     0,     0,     0,     0,
-       0,     0,     0,     0,    49,    47,     0,    97,    98,    33,
-      68,    68,    68,    68,    68,    68,    68,     0,    69,    70,
-      74,    75,    73,    72,    71,    99
+       0,     0,     0,    79,    79,    79,    90,     0,     0,     0,
+       0,     0,     0,    46,    37,     0,     0,     0,    71,    71,
+      71,    71,    71,    71,    71,     0,     0,     0,     0,     0,
+       0,    85,    84,    70,     0,    92,    35,     0,    49,    53,
+      54,     0,    55,    56,     0,    94,    57,     0,     0,     0,
+       0,    42,    43,    44,    45,    40,     0,     0,     0,    60,
+      61,    65,    66,    64,    63,    62,     0,     0,     0,     0,
+       0,     0,     0,    79,    90,     0,    51,     0,     0,     0,
+       0,   110,   103,   104,   105,   106,   107,   108,     0,     0,
+       0,    93,    92,     0,    37,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,    79,    79,    88,    89,    87,    79,
+      79,    86,    91,    59,     0,     0,    49,    47,     0,   109,
+      98,    96,    99,    97,    94,     0,     0,    38,    36,    41,
+       0,     0,     0,     0,     0,     0,     0,     0,    80,    81,
+      83,    82,    51,    48,    50,     0,     0,    95,    58,   111,
+      39,    32,     0,     0,     0,     0,     0,     0,     0,     0,
+      52,     0,   100,   101,    33,    71,    71,    71,    71,    71,
+      71,    71,     0,    72,    73,    77,    78,    76,    75,    74,
+     102
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int16 yypgoto[] =
 {
     -137,  -137,  -137,  -137,  -137,  -137,  -137,  -137,  -137,  -137,
-    -137,  -137,  -137,  -137,  -137,  -137,  -137,    61,   100,  -137,
-    -137,  -137,  -137,    17,  -128,  -137,  -137,  -137,  -137,  -118,
-     -49,  -137,    88,  -127,    39,    75,  -136,  -137
+    -137,  -137,  -137,  -137,  -137,  -137,  -137,    62,   109,  -137,
+    -137,  -137,  -137,    82,    44,    20,  -130,  -137,  -137,  -137,
+    -137,  -118,   -49,  -137,    87,  -126,    43,    78,  -136,  -137
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int16 yydefgoto[] =
 {
       -1,     1,    18,    19,    20,    21,    22,    23,    24,    25,
-      26,    27,    28,    29,    30,    31,    32,   149,   114,   225,
-     154,   115,    33,   212,   143,    34,    35,    36,    50,   158,
-      76,   104,   135,   110,   188,   144,   185,    37
+      26,    27,    28,    29,    30,    31,    32,   150,   114,   230,
+     155,   115,    33,   138,   178,   215,   144,    34,    35,    36,
+      50,   159,    76,   104,   135,   110,   191,   145,   188,    37
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -792,64 +799,64 @@ static const yytype_int16 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int16 yytable[] =
 {
-      77,   159,   160,   161,   162,   163,   164,   186,   174,   175,
-      38,     2,    39,    52,    53,     3,     4,    74,   189,    74,
-       5,     6,     7,     8,     9,    10,    11,    75,   176,   130,
-      12,    13,    14,    41,    51,    42,    54,    15,    16,   177,
-     178,   179,   180,   181,   182,   183,   184,    17,    55,    57,
-      58,    40,    56,    93,   131,   132,   133,   216,   218,    63,
-      94,   167,   220,   249,    95,    59,   138,   139,   168,    60,
-     250,    61,   169,   140,   251,   141,   142,   239,   138,   139,
-      62,    64,    66,   237,    65,   215,    67,   141,   142,   138,
-     139,    68,    69,   138,   139,    70,   217,    71,   141,   142,
-     256,    72,   141,   142,   138,   139,   150,   151,   152,   153,
-      73,   257,    82,   141,   142,    43,    44,    45,    46,    47,
-      48,    74,    78,   208,    49,   177,   178,   179,   180,   181,
-     182,   183,   184,    98,    99,   100,   101,   102,   103,    79,
-      80,    81,   268,   269,   270,   271,   272,   273,   274,    84,
-      83,    85,   233,   234,    86,    87,    88,   235,   236,   196,
-     197,   198,   199,   200,    89,    90,    91,    92,   117,    96,
-     108,    97,   105,   106,   107,   109,   111,   118,   113,   116,
-     112,   119,   120,   121,   122,   123,   124,   125,   126,   127,
-     128,   129,   136,   137,   134,   145,   146,   148,   155,   147,
-     156,   157,   165,   166,   170,   171,   172,   173,   190,   194,
-     192,   187,   193,   195,   210,   201,   202,   203,   204,   223,
-     205,   206,   207,   228,   211,   214,   226,   238,   229,   230,
-     231,   232,   224,   242,   243,   213,   221,   244,   245,   246,
-     255,   227,   247,   248,   259,   240,   252,   267,   191,   253,
-     258,   260,   222,   261,   254,   262,   263,   264,   241,   265,
-     266,   209,   219,   275
+      77,   160,   161,   162,   163,   164,   165,   176,   189,   175,
+      38,     2,    39,    52,    53,     3,     4,   192,    51,    74,
+       5,     6,     7,     8,     9,    10,    11,    54,   179,    75,
+      12,    13,    14,    41,    56,    42,    55,    15,    16,   180,
+     181,   182,   183,   184,   185,   186,   187,    17,    57,    58,
+      93,    40,    59,   168,   131,   132,   133,    94,   221,   223,
+     169,    95,   255,    60,   170,    74,   225,   139,   140,   256,
+      61,   139,   140,   257,   141,   130,   142,   143,   220,    62,
+     142,   143,   245,    64,   242,   139,   140,    63,    65,   139,
+     140,    66,   222,    67,   142,   143,   261,    68,   142,   143,
+     139,   140,    69,    43,    44,    45,    46,    47,    48,   142,
+     143,    70,    49,    71,    72,   262,   180,   181,   182,   183,
+     184,   185,   186,   187,   211,    98,    99,   100,   101,   102,
+     103,   199,   200,   201,   202,   203,   151,   152,   153,   154,
+      73,    74,    78,    79,    80,    82,    81,   273,   274,   275,
+     276,   277,   278,   279,    83,   238,   239,    85,    86,    84,
+     240,   241,    87,    88,    89,    90,   108,    91,    92,   109,
+     117,    96,    97,   105,   118,   106,   107,   111,   134,   147,
+     119,   120,   121,   113,   112,   116,   122,   123,   124,   125,
+     126,   127,   128,   129,   136,   137,   146,   148,   149,   156,
+     157,   166,   158,   167,   171,   172,   173,   174,   177,   193,
+     196,   190,   195,   197,   198,   213,   204,   205,   206,   207,
+     217,   208,   209,   210,   228,   214,   219,   218,   231,   233,
+     229,   234,   235,   248,   236,   237,   226,   243,   246,   249,
+     232,   250,   251,   252,   253,   264,   265,   254,   266,   267,
+     268,   258,   259,   272,   269,   270,   227,   271,   194,   216,
+     244,   212,   260,   263,   280,     0,     0,   247,   224
 };
 
 static const yytype_int16 yycheck[] =
 {
-      49,   119,   120,   121,   122,   123,   124,   143,   135,   137,
-       6,     0,     8,     7,     8,     4,     5,    18,   146,    18,
-       9,    10,    11,    12,    13,    14,    15,    28,    28,    28,
-      19,    20,    21,     6,    55,     8,     3,    26,    27,    39,
-      40,    41,    42,    43,    44,    45,    46,    36,    29,    55,
-       3,    47,    31,    48,   103,   104,   105,   185,   186,    37,
-      55,    48,   189,    48,    59,     3,    48,    49,    55,     3,
-      55,     3,    59,    55,    59,    57,    58,   213,    48,    49,
-       3,    55,     8,   211,    55,    55,    55,    57,    58,    48,
-      49,    55,    16,    48,    49,    16,    55,    16,    57,    58,
-      55,    16,    57,    58,    48,    49,    22,    23,    24,    25,
-      16,   239,    55,    57,    58,    50,    51,    52,    53,    54,
-      55,    18,    31,   172,    59,    39,    40,    41,    42,    43,
-      44,    45,    46,    50,    51,    52,    53,    54,    55,     3,
-       3,    31,   260,   261,   262,   263,   264,   265,   266,    34,
-      55,    38,   201,   202,    16,    35,    55,   206,   207,    50,
-      51,    52,    53,    54,     3,     3,    55,    55,    35,    55,
-      30,    55,    55,    55,    55,    32,    55,    17,    55,    55,
-      58,    17,    17,    17,    17,    17,    17,    16,    16,    16,
-      16,    16,     3,    16,    18,     3,    41,    18,    16,    29,
-      55,    18,    55,    55,    55,    55,    55,    55,     6,    55,
-      17,    33,    16,    16,     3,    17,    17,    17,    17,     3,
-      17,    17,    17,    16,    18,    40,    17,    17,    16,    16,
-      16,    16,    48,     3,     3,    55,    55,    17,     3,    17,
-       3,    55,    55,    55,     3,    28,    55,    28,   148,    55,
-      55,    17,   191,    17,   237,    17,    17,    17,   219,    17,
-      17,   173,   187,    55
+      49,   119,   120,   121,   122,   123,   124,   137,   144,   135,
+       6,     0,     8,     7,     8,     4,     5,   147,    55,    18,
+       9,    10,    11,    12,    13,    14,    15,     3,    28,    28,
+      19,    20,    21,     6,    31,     8,    29,    26,    27,    39,
+      40,    41,    42,    43,    44,    45,    46,    36,    55,     3,
+      48,    47,     3,    48,   103,   104,   105,    55,   188,   189,
+      55,    59,    48,     3,    59,    18,   192,    48,    49,    55,
+       3,    48,    49,    59,    55,    28,    57,    58,    55,     3,
+      57,    58,   218,    55,   214,    48,    49,    37,    55,    48,
+      49,     8,    55,    55,    57,    58,    55,    55,    57,    58,
+      48,    49,    16,    50,    51,    52,    53,    54,    55,    57,
+      58,    16,    59,    16,    16,   245,    39,    40,    41,    42,
+      43,    44,    45,    46,   173,    50,    51,    52,    53,    54,
+      55,    50,    51,    52,    53,    54,    22,    23,    24,    25,
+      16,    18,    31,     3,     3,    55,    31,   265,   266,   267,
+     268,   269,   270,   271,    55,   204,   205,    38,    16,    34,
+     209,   210,    35,    55,     3,     3,    30,    55,    55,    32,
+      35,    55,    55,    55,    17,    55,    55,    55,    18,    41,
+      17,    17,    17,    55,    58,    55,    17,    17,    17,    16,
+      16,    16,    16,    16,     3,    16,     3,    29,    18,    16,
+      55,    55,    18,    55,    55,    55,    55,    55,    18,     6,
+      16,    33,    17,    55,    16,     3,    17,    17,    17,    17,
+       3,    17,    17,    17,     3,    18,    40,    55,    17,    16,
+      48,    16,    16,     3,    16,    16,    55,    17,    28,     3,
+      55,    17,     3,    17,    55,     3,    17,    55,    17,    17,
+      17,    55,    55,    28,    17,    17,   194,    17,   149,   177,
+     216,   174,   242,    55,    55,    -1,    -1,   224,   190
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
@@ -859,31 +866,32 @@ static const yytype_int8 yystos[] =
        0,    62,     0,     4,     5,     9,    10,    11,    12,    13,
       14,    15,    19,    20,    21,    26,    27,    36,    63,    64,
       65,    66,    67,    68,    69,    70,    71,    72,    73,    74,
-      75,    76,    77,    83,    86,    87,    88,    98,     6,     8,
+      75,    76,    77,    83,    88,    89,    90,   100,     6,     8,
       47,     6,     8,    50,    51,    52,    53,    54,    55,    59,
-      89,    55,     7,     8,     3,    29,    31,    55,     3,     3,
+      91,    55,     7,     8,     3,    29,    31,    55,     3,     3,
        3,     3,     3,    37,    55,    55,     8,    55,    55,    16,
-      16,    16,    16,    16,    18,    28,    91,    91,    31,     3,
+      16,    16,    16,    16,    18,    28,    93,    93,    31,     3,
        3,    31,    55,    55,    34,    38,    16,    35,    55,     3,
        3,    55,    55,    48,    55,    59,    55,    55,    50,    51,
-      52,    53,    54,    55,    92,    55,    55,    55,    30,    32,
-      94,    55,    58,    55,    79,    82,    55,    35,    17,    17,
+      52,    53,    54,    55,    94,    55,    55,    55,    30,    32,
+      96,    55,    58,    55,    79,    82,    55,    35,    17,    17,
       17,    17,    17,    17,    17,    16,    16,    16,    16,    16,
-      28,    91,    91,    91,    18,    93,     3,    16,    48,    49,
-      55,    57,    58,    85,    96,     3,    41,    29,    18,    78,
-      22,    23,    24,    25,    81,    16,    55,    18,    90,    90,
-      90,    90,    90,    90,    90,    55,    55,    48,    55,    59,
-      55,    55,    55,    55,    94,    85,    28,    39,    40,    41,
-      42,    43,    44,    45,    46,    97,    97,    33,    95,    85,
-       6,    79,    17,    16,    55,    16,    50,    51,    52,    53,
-      54,    17,    17,    17,    17,    17,    17,    17,    91,    93,
-       3,    18,    84,    55,    40,    55,    85,    55,    85,    96,
-      94,    55,    78,     3,    48,    80,    17,    55,    16,    16,
-      16,    16,    16,    91,    91,    91,    91,    85,    17,    97,
-      28,    95,     3,     3,    17,     3,    17,    55,    55,    48,
-      55,    59,    55,    55,    84,     3,    55,    85,    55,     3,
-      17,    17,    17,    17,    17,    17,    17,    28,    90,    90,
-      90,    90,    90,    90,    90,    55
+      28,    93,    93,    93,    18,    95,     3,    16,    84,    48,
+      49,    55,    57,    58,    87,    98,     3,    41,    29,    18,
+      78,    22,    23,    24,    25,    81,    16,    55,    18,    92,
+      92,    92,    92,    92,    92,    92,    55,    55,    48,    55,
+      59,    55,    55,    55,    55,    96,    87,    18,    85,    28,
+      39,    40,    41,    42,    43,    44,    45,    46,    99,    99,
+      33,    97,    87,     6,    79,    17,    16,    55,    16,    50,
+      51,    52,    53,    54,    17,    17,    17,    17,    17,    17,
+      17,    93,    95,     3,    18,    86,    84,     3,    55,    40,
+      55,    87,    55,    87,    98,    96,    55,    78,     3,    48,
+      80,    17,    55,    16,    16,    16,    16,    16,    93,    93,
+      93,    93,    87,    17,    85,    99,    28,    97,     3,     3,
+      17,     3,    17,    55,    55,    48,    55,    59,    55,    55,
+      86,    55,    87,    55,     3,    17,    17,    17,    17,    17,
+      17,    17,    28,    92,    92,    92,    92,    92,    92,    92,
+      55
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
@@ -893,13 +901,14 @@ static const yytype_int8 yyr1[] =
       63,    63,    63,    63,    63,    63,    63,    63,    63,    63,
       63,    63,    63,    64,    65,    66,    67,    68,    69,    70,
       71,    72,    73,    74,    75,    76,    77,    78,    78,    79,
-      79,    80,    81,    81,    81,    81,    82,    83,    84,    84,
-      85,    85,    85,    85,    86,    87,    88,    89,    89,    89,
-      89,    89,    89,    89,    89,    89,    89,    89,    90,    90,
-      90,    90,    90,    90,    90,    90,    91,    91,    91,    91,
-      91,    91,    91,    91,    92,    92,    92,    93,    93,    94,
-      94,    95,    95,    96,    96,    96,    96,    96,    96,    96,
-      97,    97,    97,    97,    97,    97,    97,    97,    98
+      79,    80,    81,    81,    81,    81,    82,    83,    84,    85,
+      85,    86,    86,    87,    87,    87,    87,    88,    89,    90,
+      91,    91,    91,    91,    91,    91,    91,    91,    91,    91,
+      91,    92,    92,    92,    92,    92,    92,    92,    92,    93,
+      93,    93,    93,    93,    93,    93,    93,    94,    94,    94,
+      95,    95,    96,    96,    97,    97,    98,    98,    98,    98,
+      98,    98,    98,    99,    99,    99,    99,    99,    99,    99,
+      99,   100
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
@@ -909,13 +918,14 @@ static const yytype_int8 yyr2[] =
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     2,     2,     2,     2,     2,     2,     4,
        3,     3,     9,    10,     4,     5,     8,     0,     3,     5,
-       2,     1,     1,     1,     1,     1,     1,     9,     0,     3,
-       1,     1,     1,     1,     5,     8,     7,     5,     5,     5,
-       5,     5,     5,     5,     1,     2,     2,     4,     0,     6,
-       6,     6,     6,     6,     6,     6,     0,     6,     6,     6,
-       6,     3,     3,     5,     4,     4,     4,     0,     3,     0,
-       3,     0,     3,     3,     3,     3,     3,     5,     5,     7,
-       1,     1,     1,     1,     1,     1,     2,     1,     8
+       2,     1,     1,     1,     1,     1,     1,     7,     4,     0,
+       3,     0,     3,     1,     1,     1,     1,     5,     8,     7,
+       5,     5,     5,     5,     5,     5,     5,     1,     2,     2,
+       4,     0,     6,     6,     6,     6,     6,     6,     6,     0,
+       6,     6,     6,     6,     3,     3,     5,     4,     4,     4,
+       0,     3,     0,     3,     0,     3,     3,     3,     3,     3,
+       5,     5,     7,     1,     1,     1,     1,     1,     1,     2,
+       1,     8
 };
 
 
@@ -1391,117 +1401,117 @@ yyreduce:
   switch (yyn)
     {
   case 23: /* exit: EXIT SEMICOLON  */
-#line 171 "yacc_sql.y"
+#line 173 "yacc_sql.y"
                    {
         CONTEXT->ssql->flag=SCF_EXIT;//"exit";
     }
-#line 1399 "yacc_sql.tab.c"
+#line 1409 "yacc_sql.tab.c"
     break;
 
   case 24: /* help: HELP SEMICOLON  */
-#line 176 "yacc_sql.y"
+#line 178 "yacc_sql.y"
                    {
         CONTEXT->ssql->flag=SCF_HELP;//"help";
     }
-#line 1407 "yacc_sql.tab.c"
+#line 1417 "yacc_sql.tab.c"
     break;
 
   case 25: /* sync: SYNC SEMICOLON  */
-#line 181 "yacc_sql.y"
+#line 183 "yacc_sql.y"
                    {
       CONTEXT->ssql->flag = SCF_SYNC;
     }
-#line 1415 "yacc_sql.tab.c"
+#line 1425 "yacc_sql.tab.c"
     break;
 
   case 26: /* begin: TRX_BEGIN SEMICOLON  */
-#line 187 "yacc_sql.y"
+#line 189 "yacc_sql.y"
                         {
       CONTEXT->ssql->flag = SCF_BEGIN;
     }
-#line 1423 "yacc_sql.tab.c"
+#line 1433 "yacc_sql.tab.c"
     break;
 
   case 27: /* commit: TRX_COMMIT SEMICOLON  */
-#line 193 "yacc_sql.y"
+#line 195 "yacc_sql.y"
                          {
       CONTEXT->ssql->flag = SCF_COMMIT;
     }
-#line 1431 "yacc_sql.tab.c"
+#line 1441 "yacc_sql.tab.c"
     break;
 
   case 28: /* rollback: TRX_ROLLBACK SEMICOLON  */
-#line 199 "yacc_sql.y"
+#line 201 "yacc_sql.y"
                            {
       CONTEXT->ssql->flag = SCF_ROLLBACK;
     }
-#line 1439 "yacc_sql.tab.c"
+#line 1449 "yacc_sql.tab.c"
     break;
 
   case 29: /* drop_table: DROP TABLE ID SEMICOLON  */
-#line 205 "yacc_sql.y"
+#line 207 "yacc_sql.y"
                             {
         CONTEXT->ssql->flag = SCF_DROP_TABLE;//"drop_table";
         drop_table_init(&CONTEXT->ssql->sstr.drop_table, (yyvsp[-1].string));
     }
-#line 1448 "yacc_sql.tab.c"
+#line 1458 "yacc_sql.tab.c"
     break;
 
   case 30: /* show_tables: SHOW TABLES SEMICOLON  */
-#line 211 "yacc_sql.y"
+#line 213 "yacc_sql.y"
                           {
       CONTEXT->ssql->flag = SCF_SHOW_TABLES;
     }
-#line 1456 "yacc_sql.tab.c"
+#line 1466 "yacc_sql.tab.c"
     break;
 
   case 31: /* desc_table: DESC ID SEMICOLON  */
-#line 217 "yacc_sql.y"
+#line 219 "yacc_sql.y"
                       {
       CONTEXT->ssql->flag = SCF_DESC_TABLE;
       desc_table_init(&CONTEXT->ssql->sstr.desc_table, (yyvsp[-1].string));
     }
-#line 1465 "yacc_sql.tab.c"
+#line 1475 "yacc_sql.tab.c"
     break;
 
   case 32: /* create_index: CREATE INDEX ID ON ID LBRACE ID RBRACE SEMICOLON  */
-#line 225 "yacc_sql.y"
+#line 227 "yacc_sql.y"
                 {
 			CONTEXT->ssql->flag = SCF_CREATE_INDEX;//"create_index";
 			create_index_init(&CONTEXT->ssql->sstr.create_index, (yyvsp[-6].string), (yyvsp[-4].string), (yyvsp[-2].string));
 		}
-#line 1474 "yacc_sql.tab.c"
+#line 1484 "yacc_sql.tab.c"
     break;
 
   case 33: /* create_unique_index: CREATE UNIQUE INDEX ID ON ID LBRACE ID RBRACE SEMICOLON  */
-#line 233 "yacc_sql.y"
+#line 235 "yacc_sql.y"
                 {
 			CONTEXT->ssql->flag = SCF_CREATE_UNIQUE_INDEX;//"create_unique_index";
 			create_index_init(&CONTEXT->ssql->sstr.create_index, (yyvsp[-6].string), (yyvsp[-4].string), (yyvsp[-2].string));
 		}
-#line 1483 "yacc_sql.tab.c"
+#line 1493 "yacc_sql.tab.c"
     break;
 
   case 34: /* drop_index: DROP INDEX ID SEMICOLON  */
-#line 241 "yacc_sql.y"
+#line 243 "yacc_sql.y"
                 {
 			CONTEXT->ssql->flag=SCF_DROP_INDEX;//"drop_index";
 			drop_index_init(&CONTEXT->ssql->sstr.drop_index, (yyvsp[-1].string));
 		}
-#line 1492 "yacc_sql.tab.c"
+#line 1502 "yacc_sql.tab.c"
     break;
 
   case 35: /* show_index: SHOW INDEX FROM ID SEMICOLON  */
-#line 249 "yacc_sql.y"
+#line 251 "yacc_sql.y"
                 {
 			CONTEXT->ssql->flag=SCF_SHOW_INDEX;//"show_index";
 			show_index_init(&CONTEXT->ssql->sstr.show_index, (yyvsp[-1].string));
 		}
-#line 1501 "yacc_sql.tab.c"
+#line 1511 "yacc_sql.tab.c"
     break;
 
   case 36: /* create_table: CREATE TABLE ID LBRACE attr_def attr_def_list RBRACE SEMICOLON  */
-#line 257 "yacc_sql.y"
+#line 259 "yacc_sql.y"
                 {
 			CONTEXT->ssql->flag=SCF_CREATE_TABLE;//"create_table";
 			// CONTEXT->ssql->sstr.create_table.attribute_count = CONTEXT->value_length;
@@ -1509,17 +1519,17 @@ yyreduce:
 			//临时变量清零	
 			CONTEXT->value_length = 0;
 		}
-#line 1513 "yacc_sql.tab.c"
+#line 1523 "yacc_sql.tab.c"
     break;
 
   case 38: /* attr_def_list: COMMA attr_def attr_def_list  */
-#line 267 "yacc_sql.y"
+#line 269 "yacc_sql.y"
                                    {    }
-#line 1519 "yacc_sql.tab.c"
+#line 1529 "yacc_sql.tab.c"
     break;
 
   case 39: /* attr_def: ID_get type LBRACE number RBRACE  */
-#line 272 "yacc_sql.y"
+#line 274 "yacc_sql.y"
                 {
 			AttrInfo attribute;
 			attr_info_init(&attribute, CONTEXT->id, (yyvsp[-3].number), (yyvsp[-1].number));
@@ -1530,11 +1540,11 @@ yyreduce:
 			// CONTEXT->ssql->sstr.create_table.attributes[CONTEXT->value_length].length = $4;
 			CONTEXT->value_length++;
 		}
-#line 1534 "yacc_sql.tab.c"
+#line 1544 "yacc_sql.tab.c"
     break;
 
   case 40: /* attr_def: ID_get type  */
-#line 283 "yacc_sql.y"
+#line 285 "yacc_sql.y"
                 {
 			AttrInfo attribute;
 			if ((yyvsp[0].number) == CHARS) {
@@ -1551,50 +1561,50 @@ yyreduce:
 			// CONTEXT->ssql->sstr.create_table.attributes[CONTEXT->value_length].length=4; // default attribute length
 			CONTEXT->value_length++;
 		}
-#line 1555 "yacc_sql.tab.c"
+#line 1565 "yacc_sql.tab.c"
     break;
 
   case 41: /* number: NUMBER  */
-#line 301 "yacc_sql.y"
+#line 303 "yacc_sql.y"
                        {(yyval.number) = (yyvsp[0].number);}
-#line 1561 "yacc_sql.tab.c"
+#line 1571 "yacc_sql.tab.c"
     break;
 
   case 42: /* type: INT_T  */
-#line 304 "yacc_sql.y"
+#line 306 "yacc_sql.y"
               { (yyval.number)=INTS; }
-#line 1567 "yacc_sql.tab.c"
+#line 1577 "yacc_sql.tab.c"
     break;
 
   case 43: /* type: STRING_T  */
-#line 305 "yacc_sql.y"
+#line 307 "yacc_sql.y"
                   { (yyval.number)=CHARS; }
-#line 1573 "yacc_sql.tab.c"
+#line 1583 "yacc_sql.tab.c"
     break;
 
   case 44: /* type: FLOAT_T  */
-#line 306 "yacc_sql.y"
+#line 308 "yacc_sql.y"
                  { (yyval.number)=FLOATS; }
-#line 1579 "yacc_sql.tab.c"
+#line 1589 "yacc_sql.tab.c"
     break;
 
   case 45: /* type: DATE_T  */
-#line 307 "yacc_sql.y"
+#line 309 "yacc_sql.y"
                     { (yyval.number)=DATES; }
-#line 1585 "yacc_sql.tab.c"
+#line 1595 "yacc_sql.tab.c"
     break;
 
   case 46: /* ID_get: ID  */
-#line 311 "yacc_sql.y"
+#line 313 "yacc_sql.y"
         {
 		char *temp=(yyvsp[0].string); 
 		snprintf(CONTEXT->id, sizeof(CONTEXT->id), "%s", temp);
 	}
-#line 1594 "yacc_sql.tab.c"
+#line 1604 "yacc_sql.tab.c"
     break;
 
-  case 47: /* insert: INSERT INTO ID VALUES LBRACE value value_list RBRACE SEMICOLON  */
-#line 320 "yacc_sql.y"
+  case 47: /* insert: INSERT INTO ID VALUES tuple tuple_list SEMICOLON  */
+#line 324 "yacc_sql.y"
                 {
 			// CONTEXT->values[CONTEXT->value_length++] = *$6;
 
@@ -1604,40 +1614,65 @@ yyreduce:
 			// for(i = 0; i < CONTEXT->value_length; i++){
 			// 	CONTEXT->ssql->sstr.insertion.values[i] = CONTEXT->values[i];
       // }
-			inserts_init(&CONTEXT->ssql->sstr.insertion, (yyvsp[-6].string), CONTEXT->values, CONTEXT->value_length);
+		//inserts_init(&CONTEXT->ssql->sstr.insertion, $3, CONTEXT->values, CONTEXT->value_length);
+		//只获取表名 ID
+		inserts_init_table_name(&CONTEXT->ssql->sstr.insertion, (yyvsp[-4].string));
+		
 
       //临时变量清零
       CONTEXT->value_length=0;
     }
-#line 1613 "yacc_sql.tab.c"
+#line 1626 "yacc_sql.tab.c"
     break;
 
-  case 49: /* value_list: COMMA value value_list  */
-#line 337 "yacc_sql.y"
+  case 48: /* tuple: LBRACE value value_list RBRACE  */
+#line 344 "yacc_sql.y"
+        {
+       //inserts_init(&CONTEXT->ssql->sstr.insertion, $3, CONTEXT->values, CONTEXT->value_length);
+        
+		//（id1,id2,id3） ===values put to insertion
+	   	inserts_init_appends_rows_values(&CONTEXT->ssql->sstr.insertion,CONTEXT->values,CONTEXT->value_length);
+
+		CONTEXT->value_length = 0;
+
+
+	}
+#line 1641 "yacc_sql.tab.c"
+    break;
+
+  case 50: /* tuple_list: COMMA tuple tuple_list  */
+#line 357 "yacc_sql.y"
+                              { 
+	  }
+#line 1648 "yacc_sql.tab.c"
+    break;
+
+  case 52: /* value_list: COMMA value value_list  */
+#line 363 "yacc_sql.y"
                               { 
   		// CONTEXT->values[CONTEXT->value_length++] = *$2;
 	  }
-#line 1621 "yacc_sql.tab.c"
+#line 1656 "yacc_sql.tab.c"
     break;
 
-  case 50: /* value: NUMBER  */
-#line 342 "yacc_sql.y"
+  case 53: /* value: NUMBER  */
+#line 368 "yacc_sql.y"
           {	
   		value_init_integer(&CONTEXT->values[CONTEXT->value_length++], (yyvsp[0].number));
 		}
-#line 1629 "yacc_sql.tab.c"
+#line 1664 "yacc_sql.tab.c"
     break;
 
-  case 51: /* value: FLOAT  */
-#line 345 "yacc_sql.y"
+  case 54: /* value: FLOAT  */
+#line 371 "yacc_sql.y"
           {
   		value_init_float(&CONTEXT->values[CONTEXT->value_length++], (yyvsp[0].floats));
 		}
-#line 1637 "yacc_sql.tab.c"
+#line 1672 "yacc_sql.tab.c"
     break;
 
-  case 52: /* value: DATE_STR  */
-#line 348 "yacc_sql.y"
+  case 55: /* value: DATE_STR  */
+#line 374 "yacc_sql.y"
                  { // 李立基: 初始化 date, 用 int 類型保存數據, 并且檢查日期是否合法, 不合法返回 SCF_INVALID_VALUE
 		(yyvsp[0].string) = substr((yyvsp[0].string),1,strlen((yyvsp[0].string))-2);
 		if (value_init_date(&CONTEXT->values[CONTEXT->value_length++], (yyvsp[0].string)) == -1) {
@@ -1645,21 +1680,21 @@ yyreduce:
 			return -1;	// TODO: 這裏發現 date 不合法 return 推出 parse 函數, 由於目前沒有用到這個返回值, 故直接 return -1, 後期可以改.
 		}
 		}
-#line 1649 "yacc_sql.tab.c"
+#line 1684 "yacc_sql.tab.c"
     break;
 
-  case 53: /* value: SSS  */
-#line 355 "yacc_sql.y"
+  case 56: /* value: SSS  */
+#line 381 "yacc_sql.y"
          {
 			(yyvsp[0].string) = substr((yyvsp[0].string),1,strlen((yyvsp[0].string))-2);
   			value_init_string(&CONTEXT->values[CONTEXT->value_length++], (yyvsp[0].string));
 			
 		}
-#line 1659 "yacc_sql.tab.c"
+#line 1694 "yacc_sql.tab.c"
     break;
 
-  case 54: /* delete: DELETE FROM ID where SEMICOLON  */
-#line 364 "yacc_sql.y"
+  case 57: /* delete: DELETE FROM ID where SEMICOLON  */
+#line 390 "yacc_sql.y"
                 {
 			CONTEXT->ssql->flag = SCF_DELETE;//"delete";
 			deletes_init_relation(&CONTEXT->ssql->sstr.deletion, (yyvsp[-2].string));
@@ -1667,11 +1702,11 @@ yyreduce:
 					CONTEXT->conditions, CONTEXT->condition_length);
 			CONTEXT->condition_length = 0;	
     }
-#line 1671 "yacc_sql.tab.c"
+#line 1706 "yacc_sql.tab.c"
     break;
 
-  case 55: /* update: UPDATE ID SET ID EQ value where SEMICOLON  */
-#line 374 "yacc_sql.y"
+  case 58: /* update: UPDATE ID SET ID EQ value where SEMICOLON  */
+#line 400 "yacc_sql.y"
                 {
 			CONTEXT->ssql->flag = SCF_UPDATE;//"update";
 			Value *value = &CONTEXT->values[0];
@@ -1679,11 +1714,11 @@ yyreduce:
 					CONTEXT->conditions, CONTEXT->condition_length);
 			CONTEXT->condition_length = 0;
 		}
-#line 1683 "yacc_sql.tab.c"
+#line 1718 "yacc_sql.tab.c"
     break;
 
-  case 56: /* select: SELECT select_attr FROM ID rel_list where SEMICOLON  */
-#line 384 "yacc_sql.y"
+  case 59: /* select: SELECT select_attr FROM ID rel_list where SEMICOLON  */
+#line 410 "yacc_sql.y"
                 {
 			// CONTEXT->ssql->sstr.selection.relations[CONTEXT->from_length++]=$4;
 			selects_append_relation(&CONTEXT->ssql->sstr.selection, (yyvsp[-3].string));
@@ -1699,11 +1734,11 @@ yyreduce:
 			CONTEXT->select_length=0;
 			CONTEXT->value_length = 0;
 	}
-#line 1703 "yacc_sql.tab.c"
+#line 1738 "yacc_sql.tab.c"
     break;
 
-  case 57: /* select_attr: MAX LBRACE ID RBRACE aggr_func_list  */
-#line 402 "yacc_sql.y"
+  case 60: /* select_attr: MAX LBRACE ID RBRACE aggr_func_list  */
+#line 428 "yacc_sql.y"
                                             {
 		RelAttr attr;
 		relation_attr_init(&attr, NULL, (yyvsp[-2].string));
@@ -1711,11 +1746,11 @@ yyreduce:
 		aggr_func_init(&func, MAX_FUN, &attr);
 		selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 	}
-#line 1715 "yacc_sql.tab.c"
+#line 1750 "yacc_sql.tab.c"
     break;
 
-  case 58: /* select_attr: MIN LBRACE ID RBRACE aggr_func_list  */
-#line 409 "yacc_sql.y"
+  case 61: /* select_attr: MIN LBRACE ID RBRACE aggr_func_list  */
+#line 435 "yacc_sql.y"
                                               {
 		RelAttr attr;
 		relation_attr_init(&attr, NULL, (yyvsp[-2].string));
@@ -1723,11 +1758,11 @@ yyreduce:
 		aggr_func_init(&func, MIN_FUN, &attr);
 		selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 	}
-#line 1727 "yacc_sql.tab.c"
+#line 1762 "yacc_sql.tab.c"
     break;
 
-  case 59: /* select_attr: SUM LBRACE ID RBRACE aggr_func_list  */
-#line 416 "yacc_sql.y"
+  case 62: /* select_attr: SUM LBRACE ID RBRACE aggr_func_list  */
+#line 442 "yacc_sql.y"
                                               {
 		RelAttr attr;
 		relation_attr_init(&attr, NULL, (yyvsp[-2].string));
@@ -1735,11 +1770,11 @@ yyreduce:
 		aggr_func_init(&func, SUM_FUN, &attr);
 		selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 	}
-#line 1739 "yacc_sql.tab.c"
+#line 1774 "yacc_sql.tab.c"
     break;
 
-  case 60: /* select_attr: AVG LBRACE ID RBRACE aggr_func_list  */
-#line 423 "yacc_sql.y"
+  case 63: /* select_attr: AVG LBRACE ID RBRACE aggr_func_list  */
+#line 449 "yacc_sql.y"
                                               {
 		RelAttr attr;
 		relation_attr_init(&attr, NULL, (yyvsp[-2].string));
@@ -1747,11 +1782,11 @@ yyreduce:
 		aggr_func_init(&func, AVG_FUN, &attr);
 		selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 	}
-#line 1751 "yacc_sql.tab.c"
+#line 1786 "yacc_sql.tab.c"
     break;
 
-  case 61: /* select_attr: COUNT LBRACE STAR RBRACE aggr_func_list  */
-#line 430 "yacc_sql.y"
+  case 64: /* select_attr: COUNT LBRACE STAR RBRACE aggr_func_list  */
+#line 456 "yacc_sql.y"
                                                   {
 		RelAttr attr;
 		relation_attr_init(&attr, NULL, "*");
@@ -1759,11 +1794,11 @@ yyreduce:
 		aggr_func_init(&func, COUNT_FUN, &attr);
 		selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 	}
-#line 1763 "yacc_sql.tab.c"
+#line 1798 "yacc_sql.tab.c"
     break;
 
-  case 62: /* select_attr: COUNT LBRACE NUMBER RBRACE aggr_func_list  */
-#line 437 "yacc_sql.y"
+  case 65: /* select_attr: COUNT LBRACE NUMBER RBRACE aggr_func_list  */
+#line 463 "yacc_sql.y"
                                                     {
 		RelAttr attr;
 		relation_attr_init(&attr, NULL, "1");
@@ -1771,11 +1806,11 @@ yyreduce:
 		aggr_func_init(&func, COUNT_FUN, &attr);
 		selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 	}
-#line 1775 "yacc_sql.tab.c"
+#line 1810 "yacc_sql.tab.c"
     break;
 
-  case 63: /* select_attr: COUNT LBRACE ID RBRACE aggr_func_list  */
-#line 444 "yacc_sql.y"
+  case 66: /* select_attr: COUNT LBRACE ID RBRACE aggr_func_list  */
+#line 470 "yacc_sql.y"
                                                 {
 		RelAttr attr;
 		relation_attr_init(&attr, NULL, (yyvsp[-2].string));
@@ -1783,51 +1818,51 @@ yyreduce:
 		aggr_func_init(&func, COUNT_FUN, &attr);
 		selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 	}
-#line 1787 "yacc_sql.tab.c"
+#line 1822 "yacc_sql.tab.c"
     break;
 
-  case 64: /* select_attr: STAR  */
-#line 452 "yacc_sql.y"
+  case 67: /* select_attr: STAR  */
+#line 478 "yacc_sql.y"
          {  
 		RelAttr attr;
 		relation_attr_init(&attr, NULL, "*");
 		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
 	}
-#line 1797 "yacc_sql.tab.c"
+#line 1832 "yacc_sql.tab.c"
     break;
 
-  case 65: /* select_attr: STAR attr_list  */
-#line 457 "yacc_sql.y"
+  case 68: /* select_attr: STAR attr_list  */
+#line 483 "yacc_sql.y"
                          {
 			RelAttr attr;
 			relation_attr_init(&attr, NULL, "*");
 			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
 		}
-#line 1807 "yacc_sql.tab.c"
+#line 1842 "yacc_sql.tab.c"
     break;
 
-  case 66: /* select_attr: ID attr_list  */
-#line 462 "yacc_sql.y"
+  case 69: /* select_attr: ID attr_list  */
+#line 488 "yacc_sql.y"
                    {
 			RelAttr attr;
 			relation_attr_init(&attr, NULL, (yyvsp[-1].string));
 			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
 		}
-#line 1817 "yacc_sql.tab.c"
+#line 1852 "yacc_sql.tab.c"
     break;
 
-  case 67: /* select_attr: ID DOT ID attr_list  */
-#line 467 "yacc_sql.y"
+  case 70: /* select_attr: ID DOT ID attr_list  */
+#line 493 "yacc_sql.y"
                               {
 			RelAttr attr;
 			relation_attr_init(&attr, (yyvsp[-3].string), (yyvsp[-1].string));
 			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
 		}
-#line 1827 "yacc_sql.tab.c"
+#line 1862 "yacc_sql.tab.c"
     break;
 
-  case 69: /* aggr_func_list: COMMA MAX LBRACE ID RBRACE aggr_func_list  */
-#line 475 "yacc_sql.y"
+  case 72: /* aggr_func_list: COMMA MAX LBRACE ID RBRACE aggr_func_list  */
+#line 501 "yacc_sql.y"
                                                             {
 			RelAttr attr;
 			relation_attr_init(&attr, NULL, (yyvsp[-2].string));
@@ -1835,11 +1870,11 @@ yyreduce:
 			aggr_func_init(&func, MAX_FUN, &attr);
 			selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 		}
-#line 1839 "yacc_sql.tab.c"
+#line 1874 "yacc_sql.tab.c"
     break;
 
-  case 70: /* aggr_func_list: COMMA MIN LBRACE ID RBRACE aggr_func_list  */
-#line 482 "yacc_sql.y"
+  case 73: /* aggr_func_list: COMMA MIN LBRACE ID RBRACE aggr_func_list  */
+#line 508 "yacc_sql.y"
                                                             {
 			RelAttr attr;
 			relation_attr_init(&attr, NULL, (yyvsp[-2].string));
@@ -1847,11 +1882,11 @@ yyreduce:
 			aggr_func_init(&func, MIN_FUN, &attr);
 			selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 		}
-#line 1851 "yacc_sql.tab.c"
+#line 1886 "yacc_sql.tab.c"
     break;
 
-  case 71: /* aggr_func_list: COMMA SUM LBRACE ID RBRACE aggr_func_list  */
-#line 489 "yacc_sql.y"
+  case 74: /* aggr_func_list: COMMA SUM LBRACE ID RBRACE aggr_func_list  */
+#line 515 "yacc_sql.y"
                                                             {
 			RelAttr attr;
 			relation_attr_init(&attr, NULL, (yyvsp[-2].string));
@@ -1859,11 +1894,11 @@ yyreduce:
 			aggr_func_init(&func, SUM_FUN, &attr);
 			selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 		}
-#line 1863 "yacc_sql.tab.c"
+#line 1898 "yacc_sql.tab.c"
     break;
 
-  case 72: /* aggr_func_list: COMMA AVG LBRACE ID RBRACE aggr_func_list  */
-#line 496 "yacc_sql.y"
+  case 75: /* aggr_func_list: COMMA AVG LBRACE ID RBRACE aggr_func_list  */
+#line 522 "yacc_sql.y"
                                                             {
 			RelAttr attr;
 			relation_attr_init(&attr, NULL, (yyvsp[-2].string));
@@ -1871,11 +1906,11 @@ yyreduce:
 			aggr_func_init(&func, AVG_FUN, &attr);
 			selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 		}
-#line 1875 "yacc_sql.tab.c"
+#line 1910 "yacc_sql.tab.c"
     break;
 
-  case 73: /* aggr_func_list: COMMA COUNT LBRACE STAR RBRACE aggr_func_list  */
-#line 503 "yacc_sql.y"
+  case 76: /* aggr_func_list: COMMA COUNT LBRACE STAR RBRACE aggr_func_list  */
+#line 529 "yacc_sql.y"
                                                                 {
 			RelAttr attr;
 			relation_attr_init(&attr, NULL, "*");
@@ -1883,11 +1918,11 @@ yyreduce:
 			aggr_func_init(&func, COUNT_FUN, &attr);
 			selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 		}
-#line 1887 "yacc_sql.tab.c"
+#line 1922 "yacc_sql.tab.c"
     break;
 
-  case 74: /* aggr_func_list: COMMA COUNT LBRACE NUMBER RBRACE aggr_func_list  */
-#line 510 "yacc_sql.y"
+  case 77: /* aggr_func_list: COMMA COUNT LBRACE NUMBER RBRACE aggr_func_list  */
+#line 536 "yacc_sql.y"
                                                                   {
 			RelAttr attr;
 			relation_attr_init(&attr, NULL, "1");
@@ -1895,11 +1930,11 @@ yyreduce:
 			aggr_func_init(&func, COUNT_FUN, &attr);
 			selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 		}
-#line 1899 "yacc_sql.tab.c"
+#line 1934 "yacc_sql.tab.c"
     break;
 
-  case 75: /* aggr_func_list: COMMA COUNT LBRACE ID RBRACE aggr_func_list  */
-#line 517 "yacc_sql.y"
+  case 78: /* aggr_func_list: COMMA COUNT LBRACE ID RBRACE aggr_func_list  */
+#line 543 "yacc_sql.y"
                                                               {
 			RelAttr attr;
 			relation_attr_init(&attr, NULL, (yyvsp[-2].string));
@@ -1907,61 +1942,61 @@ yyreduce:
 			aggr_func_init(&func, COUNT_FUN, &attr);
 			selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 		}
-#line 1911 "yacc_sql.tab.c"
+#line 1946 "yacc_sql.tab.c"
     break;
 
-  case 77: /* attr_list: COMMA MAX LBRACE ID RBRACE attr_list  */
-#line 527 "yacc_sql.y"
+  case 80: /* attr_list: COMMA MAX LBRACE ID RBRACE attr_list  */
+#line 553 "yacc_sql.y"
                                                        {
 			// 李立基: 不支持聚合函数与单个字段混合
 			CONTEXT->ssql->flag = SCF_INVALID_ATTR;
 			return -1;
 		}
-#line 1921 "yacc_sql.tab.c"
+#line 1956 "yacc_sql.tab.c"
     break;
 
-  case 78: /* attr_list: COMMA MIN LBRACE ID RBRACE attr_list  */
-#line 532 "yacc_sql.y"
+  case 81: /* attr_list: COMMA MIN LBRACE ID RBRACE attr_list  */
+#line 558 "yacc_sql.y"
                                                        {
 			// TODO: 跟上面合并?
 			CONTEXT->ssql->flag = SCF_INVALID_ATTR;
 			return -1;
 		}
-#line 1931 "yacc_sql.tab.c"
+#line 1966 "yacc_sql.tab.c"
     break;
 
-  case 79: /* attr_list: COMMA SUM LBRACE ID RBRACE attr_list  */
-#line 537 "yacc_sql.y"
+  case 82: /* attr_list: COMMA SUM LBRACE ID RBRACE attr_list  */
+#line 563 "yacc_sql.y"
                                                        {
 			// TODO: 跟上面合并?
 			CONTEXT->ssql->flag = SCF_INVALID_ATTR;
 			return -1;
 		}
-#line 1941 "yacc_sql.tab.c"
+#line 1976 "yacc_sql.tab.c"
     break;
 
-  case 80: /* attr_list: COMMA AVG LBRACE ID RBRACE attr_list  */
-#line 542 "yacc_sql.y"
+  case 83: /* attr_list: COMMA AVG LBRACE ID RBRACE attr_list  */
+#line 568 "yacc_sql.y"
                                                        {
 			// TODO: 跟上面合并?
 			CONTEXT->ssql->flag = SCF_INVALID_ATTR;
 			return -1;
 		}
-#line 1951 "yacc_sql.tab.c"
+#line 1986 "yacc_sql.tab.c"
     break;
 
-  case 81: /* attr_list: COMMA count_func attr_list  */
-#line 547 "yacc_sql.y"
+  case 84: /* attr_list: COMMA count_func attr_list  */
+#line 573 "yacc_sql.y"
                                              {
 			// TODO: 跟上面合并?
 			CONTEXT->ssql->flag = SCF_INVALID_ATTR;
 			return -1;
 		}
-#line 1961 "yacc_sql.tab.c"
+#line 1996 "yacc_sql.tab.c"
     break;
 
-  case 82: /* attr_list: COMMA ID attr_list  */
-#line 552 "yacc_sql.y"
+  case 85: /* attr_list: COMMA ID attr_list  */
+#line 578 "yacc_sql.y"
                          {
 			RelAttr attr;
 			relation_attr_init(&attr, NULL, (yyvsp[-1].string));
@@ -1969,11 +2004,11 @@ yyreduce:
      	  // CONTEXT->ssql->sstr.selection.attributes[CONTEXT->select_length].relation_name = NULL;
         // CONTEXT->ssql->sstr.selection.attributes[CONTEXT->select_length++].attribute_name=$2;
       }
-#line 1973 "yacc_sql.tab.c"
+#line 2008 "yacc_sql.tab.c"
     break;
 
-  case 83: /* attr_list: COMMA ID DOT ID attr_list  */
-#line 559 "yacc_sql.y"
+  case 86: /* attr_list: COMMA ID DOT ID attr_list  */
+#line 585 "yacc_sql.y"
                                 {
 			RelAttr attr;
 			relation_attr_init(&attr, (yyvsp[-3].string), (yyvsp[-1].string));
@@ -1981,59 +2016,59 @@ yyreduce:
         // CONTEXT->ssql->sstr.selection.attributes[CONTEXT->select_length].attribute_name=$4;
         // CONTEXT->ssql->sstr.selection.attributes[CONTEXT->select_length++].relation_name=$2;
   	  }
-#line 1985 "yacc_sql.tab.c"
+#line 2020 "yacc_sql.tab.c"
     break;
 
-  case 84: /* count_func: COUNT LBRACE STAR RBRACE  */
-#line 568 "yacc_sql.y"
+  case 87: /* count_func: COUNT LBRACE STAR RBRACE  */
+#line 594 "yacc_sql.y"
                                  {
 
 	}
-#line 1993 "yacc_sql.tab.c"
+#line 2028 "yacc_sql.tab.c"
     break;
 
-  case 85: /* count_func: COUNT LBRACE NUMBER RBRACE  */
-#line 571 "yacc_sql.y"
+  case 88: /* count_func: COUNT LBRACE NUMBER RBRACE  */
+#line 597 "yacc_sql.y"
                                      {
 
 	}
-#line 2001 "yacc_sql.tab.c"
+#line 2036 "yacc_sql.tab.c"
     break;
 
-  case 86: /* count_func: COUNT LBRACE ID RBRACE  */
-#line 574 "yacc_sql.y"
+  case 89: /* count_func: COUNT LBRACE ID RBRACE  */
+#line 600 "yacc_sql.y"
                                  {
 
 	}
-#line 2009 "yacc_sql.tab.c"
+#line 2044 "yacc_sql.tab.c"
     break;
 
-  case 88: /* rel_list: COMMA ID rel_list  */
-#line 581 "yacc_sql.y"
+  case 91: /* rel_list: COMMA ID rel_list  */
+#line 607 "yacc_sql.y"
                         {	
 				selects_append_relation(&CONTEXT->ssql->sstr.selection, (yyvsp[-1].string));
 		  }
-#line 2017 "yacc_sql.tab.c"
+#line 2052 "yacc_sql.tab.c"
     break;
 
-  case 90: /* where: WHERE condition condition_list  */
-#line 587 "yacc_sql.y"
+  case 93: /* where: WHERE condition condition_list  */
+#line 613 "yacc_sql.y"
                                      {	
 				// CONTEXT->conditions[CONTEXT->condition_length++]=*$2;
 			}
-#line 2025 "yacc_sql.tab.c"
+#line 2060 "yacc_sql.tab.c"
     break;
 
-  case 92: /* condition_list: AND condition condition_list  */
-#line 593 "yacc_sql.y"
+  case 95: /* condition_list: AND condition condition_list  */
+#line 619 "yacc_sql.y"
                                    {
 				// CONTEXT->conditions[CONTEXT->condition_length++]=*$2;
 			}
-#line 2033 "yacc_sql.tab.c"
+#line 2068 "yacc_sql.tab.c"
     break;
 
-  case 93: /* condition: ID comOp value  */
-#line 599 "yacc_sql.y"
+  case 96: /* condition: ID comOp value  */
+#line 625 "yacc_sql.y"
                 {
 			RelAttr left_attr;
 			relation_attr_init(&left_attr, NULL, (yyvsp[-2].string));
@@ -2054,11 +2089,11 @@ yyreduce:
 			// $$->right_value = *$3;
 
 		}
-#line 2058 "yacc_sql.tab.c"
+#line 2093 "yacc_sql.tab.c"
     break;
 
-  case 94: /* condition: value comOp value  */
-#line 620 "yacc_sql.y"
+  case 97: /* condition: value comOp value  */
+#line 646 "yacc_sql.y"
                 {
 			Value *left_value = &CONTEXT->values[CONTEXT->value_length - 2];
 			Value *right_value = &CONTEXT->values[CONTEXT->value_length - 1];
@@ -2078,11 +2113,11 @@ yyreduce:
 			// $$->right_value = *$3;
 
 		}
-#line 2082 "yacc_sql.tab.c"
+#line 2117 "yacc_sql.tab.c"
     break;
 
-  case 95: /* condition: ID comOp ID  */
-#line 640 "yacc_sql.y"
+  case 98: /* condition: ID comOp ID  */
+#line 666 "yacc_sql.y"
                 {
 			RelAttr left_attr;
 			relation_attr_init(&left_attr, NULL, (yyvsp[-2].string));
@@ -2102,11 +2137,11 @@ yyreduce:
 			// $$->right_attr.attribute_name=$3;
 
 		}
-#line 2106 "yacc_sql.tab.c"
+#line 2141 "yacc_sql.tab.c"
     break;
 
-  case 96: /* condition: value comOp ID  */
-#line 660 "yacc_sql.y"
+  case 99: /* condition: value comOp ID  */
+#line 686 "yacc_sql.y"
                 {
 			Value *left_value = &CONTEXT->values[CONTEXT->value_length - 1];
 			RelAttr right_attr;
@@ -2128,11 +2163,11 @@ yyreduce:
 			// $$->right_attr.attribute_name=$3;
 		
 		}
-#line 2132 "yacc_sql.tab.c"
+#line 2167 "yacc_sql.tab.c"
     break;
 
-  case 97: /* condition: ID DOT ID comOp value  */
-#line 682 "yacc_sql.y"
+  case 100: /* condition: ID DOT ID comOp value  */
+#line 708 "yacc_sql.y"
                 {
 			RelAttr left_attr;
 			relation_attr_init(&left_attr, (yyvsp[-4].string), (yyvsp[-2].string));
@@ -2153,11 +2188,11 @@ yyreduce:
 			// $$->right_value =*$5;			
 							
     }
-#line 2157 "yacc_sql.tab.c"
+#line 2192 "yacc_sql.tab.c"
     break;
 
-  case 98: /* condition: value comOp ID DOT ID  */
-#line 703 "yacc_sql.y"
+  case 101: /* condition: value comOp ID DOT ID  */
+#line 729 "yacc_sql.y"
                 {
 			Value *left_value = &CONTEXT->values[CONTEXT->value_length - 1];
 
@@ -2178,11 +2213,11 @@ yyreduce:
 			// $$->right_attr.attribute_name = $5;
 									
     }
-#line 2182 "yacc_sql.tab.c"
+#line 2217 "yacc_sql.tab.c"
     break;
 
-  case 99: /* condition: ID DOT ID comOp ID DOT ID  */
-#line 724 "yacc_sql.y"
+  case 102: /* condition: ID DOT ID comOp ID DOT ID  */
+#line 750 "yacc_sql.y"
                 {
 			RelAttr left_attr;
 			relation_attr_init(&left_attr, (yyvsp[-6].string), (yyvsp[-4].string));
@@ -2201,68 +2236,68 @@ yyreduce:
 			// $$->right_attr.relation_name=$5;
 			// $$->right_attr.attribute_name=$7;
     }
-#line 2205 "yacc_sql.tab.c"
+#line 2240 "yacc_sql.tab.c"
     break;
 
-  case 100: /* comOp: EQ  */
-#line 745 "yacc_sql.y"
+  case 103: /* comOp: EQ  */
+#line 771 "yacc_sql.y"
              { CONTEXT->comp = EQUAL_TO; }
-#line 2211 "yacc_sql.tab.c"
+#line 2246 "yacc_sql.tab.c"
     break;
 
-  case 101: /* comOp: LT  */
-#line 746 "yacc_sql.y"
+  case 104: /* comOp: LT  */
+#line 772 "yacc_sql.y"
          { CONTEXT->comp = LESS_THAN; }
-#line 2217 "yacc_sql.tab.c"
+#line 2252 "yacc_sql.tab.c"
     break;
 
-  case 102: /* comOp: GT  */
-#line 747 "yacc_sql.y"
+  case 105: /* comOp: GT  */
+#line 773 "yacc_sql.y"
          { CONTEXT->comp = GREAT_THAN; }
-#line 2223 "yacc_sql.tab.c"
+#line 2258 "yacc_sql.tab.c"
     break;
 
-  case 103: /* comOp: LE  */
-#line 748 "yacc_sql.y"
+  case 106: /* comOp: LE  */
+#line 774 "yacc_sql.y"
          { CONTEXT->comp = LESS_EQUAL; }
-#line 2229 "yacc_sql.tab.c"
+#line 2264 "yacc_sql.tab.c"
     break;
 
-  case 104: /* comOp: GE  */
-#line 749 "yacc_sql.y"
+  case 107: /* comOp: GE  */
+#line 775 "yacc_sql.y"
          { CONTEXT->comp = GREAT_EQUAL; }
-#line 2235 "yacc_sql.tab.c"
+#line 2270 "yacc_sql.tab.c"
     break;
 
-  case 105: /* comOp: NE  */
-#line 750 "yacc_sql.y"
+  case 108: /* comOp: NE  */
+#line 776 "yacc_sql.y"
          { CONTEXT->comp = NOT_EQUAL; }
-#line 2241 "yacc_sql.tab.c"
+#line 2276 "yacc_sql.tab.c"
     break;
 
-  case 106: /* comOp: NOT LK  */
-#line 751 "yacc_sql.y"
+  case 109: /* comOp: NOT LK  */
+#line 777 "yacc_sql.y"
                  { CONTEXT->comp = NOT_LIKE; }
-#line 2247 "yacc_sql.tab.c"
+#line 2282 "yacc_sql.tab.c"
     break;
 
-  case 107: /* comOp: LK  */
-#line 752 "yacc_sql.y"
+  case 110: /* comOp: LK  */
+#line 778 "yacc_sql.y"
              { CONTEXT->comp = LIKE; }
-#line 2253 "yacc_sql.tab.c"
+#line 2288 "yacc_sql.tab.c"
     break;
 
-  case 108: /* load_data: LOAD DATA INFILE SSS INTO TABLE ID SEMICOLON  */
-#line 757 "yacc_sql.y"
+  case 111: /* load_data: LOAD DATA INFILE SSS INTO TABLE ID SEMICOLON  */
+#line 783 "yacc_sql.y"
                 {
 		  CONTEXT->ssql->flag = SCF_LOAD_DATA;
 			load_data_init(&CONTEXT->ssql->sstr.load_data, (yyvsp[-1].string), (yyvsp[-4].string));
 		}
-#line 2262 "yacc_sql.tab.c"
+#line 2297 "yacc_sql.tab.c"
     break;
 
 
-#line 2266 "yacc_sql.tab.c"
+#line 2301 "yacc_sql.tab.c"
 
       default: break;
     }
@@ -2456,7 +2491,7 @@ yyreturn:
   return yyresult;
 }
 
-#line 762 "yacc_sql.y"
+#line 788 "yacc_sql.y"
 
 //_____________________________________________________________________
 extern void scan_string(const char *str, yyscan_t scanner);

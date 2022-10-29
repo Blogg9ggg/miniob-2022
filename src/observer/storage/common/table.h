@@ -59,6 +59,8 @@ public:
   RC open(const char *meta_file, const char *base_dir, CLogManager *clog_manager);
 
   RC insert_record(Trx *trx, int value_num, const Value *values);
+  //小王同学：插入多条数据（inserts） Valuesitem 变量命名不规范
+  RC insert_record_mult_rows(Trx *trx, int values_num, const Valuesitem *values_array);
   RC update_record(Trx *trx, const char *attribute_name, const Value *value, int condition_num,
       const Condition conditions[], int *updated_count);
   RC update_record(Trx *trx, Record *old_record, Record *new_record);

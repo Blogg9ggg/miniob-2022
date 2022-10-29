@@ -100,12 +100,21 @@ typedef struct {
   size_t condition_num;           // Length of conditions in Where clause
   Condition conditions[MAX_NUM];  // conditions in Where clause
 } Selects;
-
-// struct of insert
+//小王同学：多列索引
 typedef struct {
   char *relation_name;    // Relation to insert into
   size_t value_num;       // Length of values
   Value values[MAX_NUM];  // values to insert
+} Valuesitem;
+
+// struct of insert
+typedef struct {
+  char *relation_name;    // Relation to insert into
+  //size_t value_num;       // Length of values
+  //Value values[MAX_NUM];  // values to insert
+  //小王同学：多列索引
+  size_t values_num;  //values（）,(),（）
+  Valuesitem values_item[MAX_NUM];
 } Inserts;
 
 // struct of delete
