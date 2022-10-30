@@ -138,7 +138,7 @@ public:
 
   const int size() const { return table_num_; }
   const int result_size() const { return result_.size(); }
-  RC result_at(int ind, const std::vector<int> *t_result) 
+  RC result_at(int ind, std::vector<int> *&t_result) 
   {
     if (ind < 0 || ind >= this->result_.size())
       return RC::INVALID_ARGUMENT;

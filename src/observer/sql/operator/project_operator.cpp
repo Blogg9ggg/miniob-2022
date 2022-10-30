@@ -106,7 +106,7 @@ RC ProjectOperator::print_result_CP(std::ostream &os)
   int len = cartesian_oper->result_size();
 
   for (int i = 0; i < len; i++) {
-    const std::vector<int> *tmp_result = nullptr;
+    std::vector<int> *tmp_result = nullptr;
     if (cartesian_oper->result_at(i, tmp_result) != RC::SUCCESS) {
       LOG_WARN("i = %d(%d), SOMETHING ERROR", i, len);
       break;

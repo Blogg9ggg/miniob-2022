@@ -51,14 +51,27 @@
    insert into t3 values(2, '2022-10-29');
    
    select * from t1, t2;
+   kill -9 4815
+   
    select t1.id, t2.money from t1,t2 where t1.id=t2.id;
    select t1.*, t2.money from t1,t2 where t1.id=t2.id;
    select * from t1,t2 where t1.id=1 AND t2.id=3;
    ```
+
+5. INNER JOIN 测试
+
+   ```
+   create table t1(id int, name char);
+   create table t2(id int, money int);
    
+   select * from t1 inner join t2 on t1.id=t2.id;
    
+   select * from t1 inner join t2 on t1.id=t2.id inner join t3 on t1.id=t3.id;
+   ```
+
    
-5. like 测试
+
+6. like 测试
 
   ```
   create table like_table(id int, name char);
