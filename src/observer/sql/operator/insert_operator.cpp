@@ -17,12 +17,13 @@ See the Mulan PSL v2 for more details. */
 #include "storage/common/table.h"
 #include "rc.h"
 
+//小王同学：插入多条数据（inserts）
 RC InsertOperator::open()
 {
   Table *table = insert_stmt_->table();
-  const Value *values = insert_stmt_->values();
-  int value_amount = insert_stmt_->value_amount();
-  return table->insert_record(nullptr, value_amount, values); // TODO trx
+  const Valuesitem *values = insert_stmt_->values_item();
+  int values_amount = insert_stmt_->values_amount();
+  return table->insert_record_mult_rows(nullptr, values_amount, values); // TODO trx
 }
 
 RC InsertOperator::next()

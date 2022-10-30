@@ -226,7 +226,8 @@ void selects_destroy(Selects *selects)
   }
   selects->condition_num = 0;
 }
-
+// 小王同学：Inserts属性从values改为values_items 隐藏屏蔽该函数
+/*
 void inserts_init(Inserts *inserts, const char *relation_name, Value values[], size_t value_num)
 {
   assert(value_num <= sizeof(inserts->values) / sizeof(inserts->values[0]));
@@ -236,16 +237,46 @@ void inserts_init(Inserts *inserts, const char *relation_name, Value values[], s
     inserts->values[i] = values[i];
   }
   inserts->value_num = value_num;
+}*/
+//小王同学：insert
+void inserts_init_table_name(Inserts *inserts,const char *relation_name)
+{   
+    inserts->relation_name = strdup(relation_name);
 }
+//小王同学：insert
+void inserts_init_appends_rows_values(Inserts *inserts, Value values[], size_t value_num){
+    
+   // assert(value_num <= sizeof(inserts->values) / sizeof(inserts->values[0]));
+
+    Valuesitem &pcur = inserts->values_item[inserts->values_num]; //第一个value(),(),()
+    //pcur.relation_name = strdup(relation_name);
+    
+    for (size_t i = 0; i < value_num; i++) {
+      pcur.values[i] = values[i];
+    }
+    pcur.value_num = value_num; 
+
+    inserts->values_num++;
+
+  }
+//小王同学：⼀次插入多条数据
 void inserts_destroy(Inserts *inserts)
 {
   free(inserts->relation_name);
   inserts->relation_name = nullptr;
 
-  for (size_t i = 0; i < inserts->value_num; i++) {
-    value_destroy(&inserts->values[i]);
-  }
-  inserts->value_num = 0;
+  // for (size_t i = 0; i < inserts->value_num; i++) {
+  //   value_destroy(&inserts->values[i]);
+  // }
+  // inserts->value_num = 0;
+
+    for (size_t i = 0; i < inserts->values_num; i++) {
+        Valuesitem* pvalue = &inserts->values_item[i];
+        for (size_t i = 0; i < pvalue->value_num; i++) {
+            value_destroy(&pvalue->values[i]);
+      }
+    }
+   inserts->values_num = 0;
 }
 
 void deletes_init_relation(Deletes *deletes, const char *relation_name)

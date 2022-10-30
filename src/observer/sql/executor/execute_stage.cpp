@@ -1142,8 +1142,9 @@ RC ExecuteStage::do_insert(SQLStageEvent *sql_event)
 
   InsertStmt *insert_stmt = (InsertStmt *)stmt;
   Table *table = insert_stmt->table();
-
-  RC rc = table->insert_record(trx, insert_stmt->value_amount(), insert_stmt->values());
+ //小王同学：插入多条数据（inserts）
+ // RC rc = table->insert_record(trx, insert_stmt->value_amount(), insert_stmt->values());
+ RC rc = table->insert_record_mult_rows(trx, insert_stmt->values_amount(), insert_stmt->values_item());
   if (rc == RC::SUCCESS) {
     if (!session->is_trx_multi_operation_mode()) {
       CLogRecord *clog_record = nullptr;
