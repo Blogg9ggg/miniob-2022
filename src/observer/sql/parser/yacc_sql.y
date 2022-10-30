@@ -21,6 +21,9 @@ typedef struct ParserContext {
   Condition conditions[MAX_NUM];
   CompOp comp;
 	char id[MAX_NUM];
+
+	size_t join_table_length;
+  JoinTable join_tables[MAX_NUM];
 } ParserContext;
 
 //获取子串
@@ -84,7 +87,7 @@ ParserContext *get_context(yyscan_t scanner)
         INT_T
         STRING_T
         FLOAT_T
-		DATE_T
+				DATE_T
         HELP
         EXIT
         DOT //QUOTE
@@ -92,6 +95,8 @@ ParserContext *get_context(yyscan_t scanner)
         VALUES
         FROM
         WHERE
+				INNER
+				JOIN
         AND
         SET
         ON
@@ -380,23 +385,53 @@ update:			/*  update 语句的语法解析树*/
 		}
     ;
 select:				/*  select 语句的语法解析树*/
-    SELECT select_attr FROM ID rel_list where SEMICOLON
-		{
-			// CONTEXT->ssql->sstr.selection.relations[CONTEXT->from_length++]=$4;
-			selects_append_relation(&CONTEXT->ssql->sstr.selection, $4);
+	SELECT select_attr FROM ID INNER JOIN ID on_list inner_joins where SEMICOLON
+	{
+		join_table_init(&CONTEXT->join_tables[CONTEXT->join_table_length], $7, CONTEXT->conditions, CONTEXT->condition_length);
+		CONTEXT->join_table_length++;
 
-			selects_append_conditions(&CONTEXT->ssql->sstr.selection, CONTEXT->conditions, CONTEXT->condition_length);
+		selects_init_inner_join(&CONTEXT->ssql->sstr.selection.inner_join, $4, CONTEXT->join_tables, CONTEXT->join_table_length);
+		
+		selects_append_conditions(&CONTEXT->ssql->sstr.selection, CONTEXT->conditions, CONTEXT->condition_length);
+		CONTEXT->ssql->flag=SCF_SELECT;//"select";
 
-			CONTEXT->ssql->flag=SCF_SELECT;//"select";
-			// CONTEXT->ssql->sstr.selection.attr_num = CONTEXT->select_length;
+		//临时变量清零
+		CONTEXT->condition_length=0;
+		CONTEXT->value_length = 0;
+	}
+	| SELECT select_attr FROM ID rel_list where SEMICOLON
+	{
+		// CONTEXT->ssql->sstr.selection.relations[CONTEXT->from_length++]=$4;
+		selects_append_relation(&CONTEXT->ssql->sstr.selection, $4);
 
-			//临时变量清零
-			CONTEXT->condition_length=0;
-			CONTEXT->from_length=0;
-			CONTEXT->select_length=0;
-			CONTEXT->value_length = 0;
+		selects_append_conditions(&CONTEXT->ssql->sstr.selection, CONTEXT->conditions, CONTEXT->condition_length);
+
+		CONTEXT->ssql->flag=SCF_SELECT;//"select";
+		// CONTEXT->ssql->sstr.selection.attr_num = CONTEXT->select_length;
+
+		//临时变量清零
+		CONTEXT->condition_length=0;
+		CONTEXT->from_length=0;
+		CONTEXT->select_length=0;
+		CONTEXT->value_length = 0;
 	}
 	;
+inner_joins:
+	/* empty */
+	| INNER JOIN ID on_list inner_joins {
+		join_table_init(&CONTEXT->join_tables[CONTEXT->join_table_length], $3, CONTEXT->conditions, CONTEXT->condition_length);
+		CONTEXT->join_table_length++;
+
+		// 临时变量清零
+		CONTEXT->condition_length = 0;
+	}
+	;
+on_list:
+	ON condition condition_list {
+
+	}
+	;
+
 
 select_attr:
 	MAX LBRACE ID RBRACE aggr_func_list {
@@ -448,28 +483,32 @@ select_attr:
 		aggr_func_init(&func, COUNT_FUN, &attr);
 		selects_append_aggr_func(&CONTEXT->ssql->sstr.selection, &func);
 	}
-
+	| ID DOT STAR attr_list {
+		RelAttr attr;
+		relation_attr_init(&attr, $1, "*");
+		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+	}
   | STAR {  
 		RelAttr attr;
 		relation_attr_init(&attr, NULL, "*");
 		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
 	}
 	| STAR attr_list {
-			RelAttr attr;
-			relation_attr_init(&attr, NULL, "*");
-			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-		}
-    | ID attr_list {
-			RelAttr attr;
-			relation_attr_init(&attr, NULL, $1);
-			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-		}
-  	| ID DOT ID attr_list {
-			RelAttr attr;
-			relation_attr_init(&attr, $1, $3);
-			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-		}
-    ;
+		RelAttr attr;
+		relation_attr_init(&attr, NULL, "*");
+		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+	}
+	| ID attr_list {
+		RelAttr attr;
+		relation_attr_init(&attr, NULL, $1);
+		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+	}
+	| ID DOT ID attr_list {
+		RelAttr attr;
+		relation_attr_init(&attr, $1, $3);
+		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+	}
+	;
 aggr_func_list:
 		/* empty */
 		| COMMA MAX LBRACE ID RBRACE aggr_func_list {
@@ -549,6 +588,11 @@ attr_list:
 			CONTEXT->ssql->flag = SCF_INVALID_ATTR;
 			return -1;
 		}
+		| COMMA ID DOT STAR attr_list {
+			RelAttr attr;
+			relation_attr_init(&attr, $2, "*");
+			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+		}
     | COMMA ID attr_list {
 			RelAttr attr;
 			relation_attr_init(&attr, NULL, $2);
@@ -585,6 +629,7 @@ rel_list:
 where:
     /* empty */ 
     | WHERE condition condition_list {	
+			yyerror(scanner, "=== where ===");
 				// CONTEXT->conditions[CONTEXT->condition_length++]=*$2;
 			}
     ;

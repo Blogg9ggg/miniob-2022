@@ -52,6 +52,7 @@
    
    select * from t1, t2;
    select t1.id, t2.money from t1,t2 where t1.id=t2.id;
+   select t1.*, t2.money from t1,t2 where t1.id=t2.id;
    select * from t1,t2 where t1.id=1 AND t2.id=3;
    ```
    
@@ -128,3 +129,17 @@ select AVG(id) from aggr_table;
 select * from aggr_table;
 ```
 
+
+
+7. inner-join 测试
+
+   ```
+   create table t1(id int, name char);
+   create table t2(id int, day date);
+   
+   select * from t1 inner join t2 on t1.id = t2.id where t1.id = 10;
+   ```
+
+   
+
+8. 123

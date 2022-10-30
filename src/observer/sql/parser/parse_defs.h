@@ -86,13 +86,40 @@ typedef struct {
   RelAttr attribute;
 } AggrFunc;
 
+/*
+ * 作者: 李立基
+ * 说明: 用于描述 join 的表
+ */
+typedef struct {
+  char *relation_name;  // 表名
+
+  // 描述 ON 后面的条件
+  size_t condition_num;           
+  Condition conditions[MAX_NUM];
+} JoinTable;
+/*
+ * 作者: 李立基
+ * 说明: 用于 INNER JOIN
+ * 格式: ID INNER JOIN ON on_condition ID [INNER JOIN ON on_condition ID ...]
+ */
+typedef struct {
+  char *first_relation; // 第一张表的表名
+  size_t join_tables_num;
+  JoinTable join_tables[MAX_NUM];
+} InnerJoin;
+
+
 // struct of select
 typedef struct {
   size_t aggr_func_num;
   AggrFunc aggr_funcs[MAX_NUM];
 
+  InnerJoin inner_join;
+
+  // 李立基: 这 2 个现在是废弃字段了
   int aggr_type;         // 李立基: 标记聚合函数类型
   int aggr_arg_num;      // 李立基: 用于处理聚合函数中以数字为参数的情况(目前主要用于 count 函数). -1, 该字段无效; 0, 该字段为 *
+  
   size_t attr_num;                // Length of attrs in Select clause
   RelAttr attributes[MAX_NUM];    // attrs in Select clause
   size_t relation_num;            // Length of relations in Fro clause
@@ -282,6 +309,8 @@ Query *query_create();  // create and init
 void query_reset(Query *query);
 void query_destroy(Query *query);  // reset and delete
 
+void join_table_init(JoinTable *join_table, const char *relation_name, Condition conditions[], size_t condition_num);
+void selects_init_inner_join(InnerJoin *inner_join, const char *relation_name, JoinTable join_tables[], size_t join_table_num);
 #ifdef __cplusplus
 }
 #endif  // __cplusplus

@@ -172,8 +172,37 @@ void selects_append_conditions(Selects *selects, Condition conditions[], size_t 
   selects->condition_num = condition_num;
 }
 
+void join_table_destroy(JoinTable *join_table)
+{
+  for (size_t i = 0; i < join_table->condition_num; i++) {
+    condition_destroy(&(join_table->conditions[i]));
+  }
+  join_table->condition_num = 0;
+
+  if (join_table->relation_name) {
+    free(join_table->relation_name);
+  }
+  join_table->relation_name = 0;
+}
+void inner_join_destroy(InnerJoin *inner_join)
+{
+  if (!(inner_join->join_tables_num)) {
+    return;
+  }
+  for (size_t i = 0; i < (inner_join->join_tables_num); i++) {
+    join_table_destroy(&(inner_join->join_tables[i]));
+  }
+  inner_join->join_tables_num = 0;
+
+  if (inner_join->first_relation) {
+    free(inner_join->first_relation);
+  }
+  inner_join->first_relation = 0;
+}
 void selects_destroy(Selects *selects)
 {
+  inner_join_destroy(&selects->inner_join);
+
   selects->aggr_type = NO_FUN;
 
   for (size_t i = 0; i < selects->aggr_func_num; i++) {
@@ -468,6 +497,36 @@ void query_destroy(Query *query)
   query_reset(query);
   free(query);
 }
+
+void join_table_init(JoinTable *join_table, const char *relation_name, Condition conditions[], size_t condition_num)
+{
+  assert(condition_num <= sizeof(join_table->conditions) / sizeof(join_table->conditions[0]));
+  for (size_t i = 0; i < condition_num; i++) {
+    join_table->conditions[i] = conditions[i];
+  }
+  join_table->condition_num = condition_num;
+
+  join_table->relation_name = strdup(relation_name);
+}
+
+void join_table_cp(JoinTable *from, JoinTable *to) 
+{
+  to->condition_num = from->condition_num;
+  for (int i = 0; i < from->condition_num; i++) {
+    to->conditions[i] = from->conditions[i];
+  }
+
+  to->relation_name = strdup(from->relation_name);
+}
+void selects_init_inner_join(InnerJoin *inner_join, const char *relation_name, JoinTable join_tables[], size_t join_table_num)
+{
+  inner_join->first_relation = strdup(relation_name);
+  inner_join->join_tables_num = join_table_num;
+  for (int i = 0; i < join_table_num; i++) {
+    join_table_cp(&join_tables[i], &(inner_join->join_tables[i]));
+  }
+}
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif  // __cplusplus

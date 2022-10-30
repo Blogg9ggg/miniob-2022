@@ -1,0 +1,1 @@
+mkdir -p build && rm -rf build/miniob/ && cd build && cmake -DCMAKE_BUILD_TYPE=Release .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++ && make -j4
