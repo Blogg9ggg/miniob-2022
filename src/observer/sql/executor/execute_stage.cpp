@@ -780,8 +780,8 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
     ProjectOperator *project_oper = new ProjectOperator();
     project_oper->add_child(merge_oper);
 
-    // project_oper->open();
-    merge_oper->open();
+    project_oper->open();
+    // merge_oper->open();
 
     // 计算笛卡尔积的结果
     std::vector<int> tmp(merge_oper->size());

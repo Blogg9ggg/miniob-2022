@@ -655,7 +655,6 @@ rel_list:
 where:
     /* empty */ 
     | WHERE condition condition_list {	
-			yyerror(scanner, "=== where ===");
 				// CONTEXT->conditions[CONTEXT->condition_length++]=*$2;
 			}
     ;
