@@ -724,7 +724,8 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
 
   // =================== 多表查询实验区 ===================
   if (select_stmt->tables().size() != 1) {
-    CartesianOperator *merge_oper = new CartesianOperator(select_stmt->filter_stmt(), select_stmt->tables().size());
+    CartesianOperator *merge_oper = 
+      new CartesianOperator(select_stmt->filter_stmt(), select_stmt->tables().size());
 
     int tid = 0;
     // for (int t = 0; t < select_stmt->tables().size(); t++) {
@@ -779,8 +780,8 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
     ProjectOperator *project_oper = new ProjectOperator();
     project_oper->add_child(merge_oper);
 
-    project_oper->open();
-    // merge_oper->open();
+    // project_oper->open();
+    merge_oper->open();
 
     // 计算笛卡尔积的结果
     std::vector<int> tmp(merge_oper->size());
@@ -802,10 +803,8 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
     // delete merge_oper;
     // merge_oper = nullptr;
 
-    return RC::UNIMPLENMENT;
+    return RC::SUCCESS;
   }
-
-
 
   // 李立基: 由于没有聚合函数和正常查询混合的 case, 故可以将这两个功能分开写.
   // =================== 聚合函数 ===================

@@ -14,8 +14,18 @@ RC CartesianOperator::next()
 RC CartesianOperator::open()
 {
   LOG_INFO("Enter");
-  LOG_INFO("filter_units size: %d", filter_stmt_->filter_units().size());
-  for (FilterUnit *filter_unit : filter_stmt_->filter_units()) {
+  if (filter_stmt_ == nullptr) {
+    return RC::SUCCESS;
+  }
+
+  const std::vector<FilterUnit *> &filter_units = filter_stmt_->filter_units();
+  if (filter_units.empty()) {
+    return RC::SUCCESS;
+  }
+
+  for (FilterUnit *filter_unit : filter_units) {
+  // LOG_INFO("filter_units size: %d", filter_stmt_->filter_units().size());
+  // for (FilterUnit *filter_unit : filter_stmt_->filter_units()) {
     if (filter_unit->left()->type() == ExprType::FIELD 
     && filter_unit->right()->type() == ExprType::FIELD) {
       FieldExpr *left_expr = static_cast<FieldExpr *>(filter_unit->left());

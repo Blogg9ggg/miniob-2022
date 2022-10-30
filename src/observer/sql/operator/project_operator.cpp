@@ -21,6 +21,7 @@ See the Mulan PSL v2 for more details. */
 
 RC ProjectOperator::open()
 {
+  LOG_INFO("Enter.");
   if (children_.size() != 1) {
     LOG_WARN("project operator must has 1 child");
     return RC::INTERNAL;
@@ -103,10 +104,17 @@ RC ProjectOperator::print_result_CP(std::ostream &os)
   }
 
   int len = cartesian_oper->result_size();
-  for (int i = 0; i < len; i++) {
-    std::vector<int> tmp_result;
-    cartesian_oper->result_at(i, tmp_result);
 
+  for (int i = 0; i < len; i++) {
+    const std::vector<int> *tmp_result = nullptr;
+    if (cartesian_oper->result_at(i, tmp_result) != RC::SUCCESS) {
+      LOG_WARN("i = %d(%d), SOMETHING ERROR", i, len);
+      break;
+    }
+    if (tmp_result == nullptr) {
+      LOG_WARN("SOMETHING ERROR");
+      continue;
+    }
 
     for (int j = 0; j < this->fields_CP_.size(); j++) {
       if (j > 0) {
@@ -118,11 +126,16 @@ RC ProjectOperator::print_result_CP(std::ostream &os)
       int table_id = cartesian_oper->table_name2id(table_name);
       TupleCell cell;
 
-      cartesian_oper->find_cell(field, table_id, tmp_result.at(table_id), cell);
+      if (tmp_result->empty() || table_id >= tmp_result->size()) {
+        LOG_WARN("SOMETHING ERROR");
+        break;
+      }
+      cartesian_oper->find_cell(field, table_id, tmp_result->at(table_id), cell);
 
       cell.to_string(os);
-      
     }
     os << std::endl;
   }
+
+  return RC::SUCCESS;
 }

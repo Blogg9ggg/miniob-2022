@@ -20,6 +20,7 @@ See the Mulan PSL v2 for more details. */
 
 RC PredicateOperator::open()
 {
+  LOG_INFO("Enter.");
   if (children_.size() != 1) {
     LOG_WARN("predicate operator must has one child");
     return RC::INTERNAL;

@@ -57,13 +57,16 @@ int readFromFile(const std::string &fileName, char *&outputData, size_t &fileSiz
       return -1;
     }
 
-    data = (char *)lrealloc(data, readSize + oneRead);
-    if (data == NULL) {
+    // 李立基: 修正内存泄漏点
+    char *new_data = (char *)lrealloc(data, readSize + oneRead);
+    // data = (char *)lrealloc(data, readSize + oneRead);
+    if (new_data == NULL) {
       std::cerr << "Failed to alloc memory for " << fileName << SYS_OUTPUT_FILE_POS << SYS_OUTPUT_ERROR << std::endl;
       lfree(data);
       fclose(file);
       return -1;
     } else {
+      data = new_data;
       memcpy(data + readSize, buffer, oneRead);
       readSize += oneRead;
     }

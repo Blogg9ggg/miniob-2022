@@ -18,6 +18,7 @@ See the Mulan PSL v2 for more details. */
 
 RC TableScanOperator::open()
 {
+  LOG_INFO("Enter.");
   RC rc = table_->get_record_scanner(record_scanner_);
   if (rc == RC::SUCCESS) {
     tuple_.set_schema(table_, table_->table_meta().field_metas());
