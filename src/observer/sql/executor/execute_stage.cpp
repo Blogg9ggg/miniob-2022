@@ -736,7 +736,7 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
       merge_oper->update_map(static_cast<std::string>(now_table_name), tid);
 
       const std::vector<FieldMeta> *field_metas = now_table->table_meta().field_metas();
-      for(int i = 0; i < field_metas->size(); i++) {
+      for(size_t i = 0; i < field_metas->size(); i++) {
         FieldExpr *field_expr = new FieldExpr(now_table, &field_metas->at(i));
         TupleCellSpec *tuple_cell_spec = new TupleCellSpec(field_expr);
         merge_oper->update_speces(tid, tuple_cell_spec);
@@ -780,7 +780,9 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
     ProjectOperator *project_oper = new ProjectOperator();
     project_oper->add_child(merge_oper);
 
-    project_oper->open();
+    if ((rc = project_oper->open()) != RC::SUCCESS) {
+      return rc;
+    }
     // merge_oper->open();
 
     // 计算笛卡尔积的结果
@@ -949,7 +951,7 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
   }
 
   // =================== 正常查询 ===================
-  Table *default_table = select_stmt->tables()[0]; // 单表
+  // Table *default_table = select_stmt->tables()[0]; // default_table 暂时没有用到, 先注释掉
   Operator *scan_oper = try_to_create_index_scan_operator(select_stmt->filter_stmt(), select_stmt->tables()[0]);
   if (nullptr == scan_oper) {
     scan_oper = new TableScanOperator(select_stmt->tables()[0]);

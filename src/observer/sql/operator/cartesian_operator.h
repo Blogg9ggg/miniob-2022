@@ -1,8 +1,3 @@
-//
-// Created by chenfarong on 2022/10/24.
-//
-
-
 #include "sql/stmt/filter_stmt.h"
 #include "operator.h"
 #include "sql/expr/tuple.h"
@@ -27,7 +22,7 @@ public:
 
     filter_stmt_ = nullptr;
     table_name2id_.clear();
-    for (int i = 0; i < speces_per_table_.size(); i++) {
+    for (size_t i = 0; i < speces_per_table_.size(); i++) {
       for (TupleCellSpec *spec : speces_per_table_[i]) {
         delete spec;
       }
@@ -40,7 +35,7 @@ public:
     table_name2id_[name] = id;
   }
   RC update_lists(int id, Tuple *tuple) {
-    if (id < 0 || id >= this->size()) {
+    if (id < 0 || (size_t)id >= this->size()) {
       return RC::NOTFOUND;
     }
 
@@ -59,7 +54,7 @@ public:
     return RC::SUCCESS;
   }
   RC update_speces(int id, TupleCellSpec *spec) {
-    if (id < 0 || id >= this->size()) {
+    if (id < 0 || (size_t)id >= this->size()) {
       return RC::NOTFOUND;
     }
     
@@ -74,7 +69,7 @@ public:
     const char *field_name = field.field_name();
 
     // 第 0 列是 __trx
-    for (int i = 1; i < speces_per_table_[table_id].size(); i++) {
+    for (size_t i = 1; i < speces_per_table_[table_id].size(); i++) {
       const FieldExpr *field_expr = (const FieldExpr *)speces_per_table_[table_id][i]->expression();
       const Field &field_tmp = field_expr->field();
       if (0 == strcmp(field_name, field_tmp.field_name())) {
@@ -97,33 +92,33 @@ public:
   RC test(std::ostream &os) {
     RC rc = RC::SUCCESS;
 
-    for (int i = 0; i < this->result_.size(); i++) {
+    for (size_t i = 0; i < this->result_.size(); i++) {
       std::string s; 
-      for (int j = 0; j < this->result_[i].size(); j++) {
+      for (size_t j = 0; j < this->result_[i].size(); j++) {
         s += std::to_string(result_[i][j]);
         s += ", ";
       }
       LOG_INFO("result %d: %s", i, s.c_str());
     }
 
-    for (int i = 0; i < this->size(); i++) {
+    for (size_t i = 0; i < this->size(); i++) {
       LOG_INFO("table %d: ", i);
-      for (int j = 0; j < this->tuple_per_table_[i].size(); j++) {
+      for (size_t j = 0; j < this->tuple_per_table_[i].size(); j++) {
         LOG_INFO("ptr%d: %lx", j, (long)this->tuple_per_table_[i][j]);
       }
     }
 
-    for (int i = 0; i < this->size(); i++) {
-      for (int j = 0; j < speces_per_table_[i].size(); j++) {
+    for (size_t i = 0; i < this->size(); i++) {
+      for (size_t j = 0; j < speces_per_table_[i].size(); j++) {
         const FieldExpr *field_expr = (const FieldExpr *)speces_per_table_[i][j]->expression();
         const Field &field_tmp = field_expr->field();
         os << field_tmp.table_name() << "." << field_tmp.field_name() << " | ";
       } os << std::endl;
 
-      for (int row_id = 0; row_id < tuple_per_table_[i].size(); row_id++) {
+      for (size_t row_id = 0; row_id < tuple_per_table_[i].size(); row_id++) {
         Tuple *tuple = tuple_per_table_[i][row_id];
         
-        for (int j = 0; j < speces_per_table_[i].size(); j++) {
+        for (size_t j = 0; j < speces_per_table_[i].size(); j++) {
           TupleCell cell;
           tuple->cell_at(j, cell);
           cell.to_string(os); 
@@ -136,11 +131,11 @@ public:
   }
   void dfs(std::ostream &os, int now_table, std::vector<int> &rec);
 
-  const int size() const { return table_num_; }
-  const int result_size() const { return result_.size(); }
+  const size_t size() const { return table_num_; }
+  const size_t result_size() const { return result_.size(); }
   RC result_at(int ind, std::vector<int> *&t_result) 
   {
-    if (ind < 0 || ind >= this->result_.size())
+    if (ind < 0 || (size_t)ind >= this->result_.size())
       return RC::INVALID_ARGUMENT;
     t_result = &result_[ind];
     return RC::SUCCESS;

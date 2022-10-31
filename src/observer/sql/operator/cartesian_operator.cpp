@@ -1,7 +1,3 @@
-//
-// Created by chenfarong on 2022/10/24.
-//
-
 #include "cartesian_operator.h"
 #include "sql/stmt/filter_stmt.h"
 
@@ -13,7 +9,6 @@ RC CartesianOperator::next()
 }
 RC CartesianOperator::open()
 {
-  LOG_INFO("Enter");
   if (filter_stmt_ == nullptr) {
     return RC::SUCCESS;
   }
@@ -30,7 +25,7 @@ RC CartesianOperator::open()
     && filter_unit->right()->type() == ExprType::FIELD) {
       FieldExpr *left_expr = static_cast<FieldExpr *>(filter_unit->left());
       FieldExpr *right_expr = static_cast<FieldExpr *>(filter_unit->right());
-      CompOp comp = filter_unit->comp();
+      // CompOp comp = filter_unit->comp();
       if (!strcmp(left_expr->table_name(), right_expr->table_name())) {
         continue;
       }
@@ -41,7 +36,8 @@ RC CartesianOperator::open()
       cen_contition_[std::max(ltab, rtab)].push_back(filter_unit);
     }
   }
-  LOG_INFO("End");
+
+  return RC::SUCCESS;
 }
 RC CartesianOperator::close()
 {
@@ -89,17 +85,17 @@ void CartesianOperator::dfs(std::ostream &os, int now_table, std::vector<int> &r
 {
   LOG_INFO("now_table: %d, Enter.", now_table);
 
-  if (now_table == this->size()) {
+  if ((size_t)now_table == this->size()) {
     // TODO: result_ 的结果还没测试
     this->result_.push_back(std::vector<int>());
     std::vector<int> &new_result = result_[result_.size() - 1];
-    for (int table_id = 0; table_id < this->size(); table_id++) {
+    for (size_t table_id = 0; table_id < this->size(); table_id++) {
       new_result.push_back(rec[table_id]);
     }
     return;
   }
   
-  for (int row_id = 0; row_id < tuple_per_table_[now_table].size(); row_id++) {
+  for (size_t row_id = 0; row_id < tuple_per_table_[now_table].size(); row_id++) {
     Tuple* tuple = tuple_per_table_[now_table][row_id];
     if (tuple == nullptr) {
       LOG_ERROR("tuple is nullptr.");
