@@ -127,20 +127,9 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
   }
   
   if (select_sql.inner_join.join_tables_num > 0) {
-    const char *first_table_name = select_sql.inner_join.first_relation;
-    if (nullptr == first_table_name) {
-      LOG_WARN("invalid argument. first table name is null.");
-      return RC::INVALID_ARGUMENT;
-    }
-    Table *table = db->find_table(first_table_name);
-    if (nullptr == table) {
-      LOG_WARN("no such table. db=%s, table_name=%s", db->name(), first_table_name);
-      return RC::SCHEMA_TABLE_NOT_EXIST;
-    }
-    tables.push_back(table);
-    table_map.insert(std::pair<std::string, Table*>(first_table_name, table));
-
-    for (int i = select_sql.inner_join.join_tables_num - 1; i >= 0; i--) {
+    Table *table;
+    for (int i = 0; i < select_sql.inner_join.join_tables_num; i++) {
+    // for (int i = select_sql.inner_join.join_tables_num - 1; i >= 0; i--) {
       const char *table_name = select_sql.inner_join.join_tables[i].relation_name;
       LOG_INFO("(i = %d): table name = %s", i, table_name);
       if (nullptr == table_name) {
@@ -157,6 +146,19 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
       tables.push_back(table);
       table_map.insert(std::pair<std::string, Table*>(table_name, table));
     }
+
+    const char *first_table_name = select_sql.inner_join.first_relation;
+    if (nullptr == first_table_name) {
+      LOG_WARN("invalid argument. first table name is null.");
+      return RC::INVALID_ARGUMENT;
+    }
+    table = db->find_table(first_table_name);
+    if (nullptr == table) {
+      LOG_WARN("no such table. db=%s, table_name=%s", db->name(), first_table_name);
+      return RC::SCHEMA_TABLE_NOT_EXIST;
+    }
+    tables.push_back(table);
+    table_map.insert(std::pair<std::string, Table*>(first_table_name, table));
   }
   
   Table *default_table = nullptr;
