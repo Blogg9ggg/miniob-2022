@@ -64,9 +64,13 @@
    create table t1(id int, name char);
    create table t2(id int, money int);
    
+   insert into t1 values(1, 'a');
+   insert into t1 values(2, 'b');
+   
+   insert into t2 values(1, 1000);
+   
    select * from t1 inner join t2 on t1.id=t2.id;
    
-   select * from t1 inner join t2 on t1.id=t2.id inner join t3 on t1.id=t3.id;
    ```
 
    

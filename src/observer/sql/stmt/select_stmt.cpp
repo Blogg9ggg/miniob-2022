@@ -37,6 +37,35 @@ static void wildcard_fields(Table *table, std::vector<Field> &field_metas)
   }
 }
 
+/*
+ * 作者: 李立基
+ * 说明: 创建 InnerJoinStmt 实例, 保存相应的信息
+ */
+RC SelectStmt::create_inner_join_stmt(Db *db, const Selects &select_sql, Table *default_table, 
+  std::unordered_map<std::string, Table *> *table_map, InnerJoinStmt *&inner_join_stmt)
+{
+  for (int i = 0; i < select_sql.inner_join.join_tables_num; i++) {
+    FilterStmt *filter_stmt_tmp = nullptr;
+    RC rc = FilterStmt::create(db, default_table, table_map, 
+      select_sql.inner_join.join_tables[i].conditions, 
+      select_sql.inner_join.join_tables[i].condition_num, 
+      filter_stmt_tmp);
+    
+    if (rc != RC::SUCCESS) {
+      LOG_WARN("cannot construct filter stmt");
+      return rc;
+    }
+    
+    rc = inner_join_stmt->append_filter_stmt(filter_stmt_tmp);
+    if (rc != RC::SUCCESS) {
+      return rc;
+    }
+    LOG_INFO("SUCCESS.");
+  }
+
+  return RC::SUCCESS;
+}
+
 void test() {
   
 }
@@ -49,11 +78,16 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
 
   // 测试代码
   // inner join 的 table 得反过来看
-  // LOG_INFO("join_tables_num = %d\n", select_sql.inner_join.join_tables_num);
+  // LOG_INFO("join_tables_num = %d", select_sql.inner_join.join_tables_num);
   // if (select_sql.inner_join.join_tables_num > 0) {
-  //   LOG_INFO("first_relation: %s\n", select_sql.inner_join.first_relation);
+  //   LOG_INFO("first_relation: %s", select_sql.inner_join.first_relation);
   //   for (int i = 0; i < select_sql.inner_join.join_tables_num; i++) {
-  //     LOG_INFO("table name: %s\n", select_sql.inner_join.join_tables[i].relation_name);
+  //     LOG_INFO("table name: %s", select_sql.inner_join.join_tables[i].relation_name);
+  //   }
+
+  //   LOG_INFO("tables_num = %d", select_sql.relation_num);
+  //   for (int i = 0; i < select_sql.relation_num; i++) {
+  //     LOG_INFO("table name: %s", select_sql.relations[i]);
   //   }
     
   //   return RC::UNIMPLENMENT;
@@ -72,6 +106,7 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
     return RC::GENERIC_ERROR;
   }
 
+  // 为 tables_ 字段赋值
   std::vector<Table *> tables;
   std::unordered_map<std::string, Table *> table_map;
   for (size_t i = 0; i < select_sql.relation_num; i++) {
@@ -105,8 +140,9 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
     tables.push_back(table);
     table_map.insert(std::pair<std::string, Table*>(first_table_name, table));
 
-    for (size_t i = select_sql.inner_join.join_tables_num - 1; i >= 0; i--) {
+    for (int i = select_sql.inner_join.join_tables_num - 1; i >= 0; i--) {
       const char *table_name = select_sql.inner_join.join_tables[i].relation_name;
+      LOG_INFO("(i = %d): table name = %s", i, table_name);
       if (nullptr == table_name) {
         LOG_WARN("invalid argument. relation name is null. index=%d", i);
         return RC::INVALID_ARGUMENT;
@@ -136,6 +172,14 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
   if (rc != RC::SUCCESS) {
     LOG_WARN("cannot construct filter stmt");
     return rc;
+  }
+
+  // 处理 inner join
+  InnerJoinStmt *inner_join_stmt = nullptr;
+  if (select_sql.inner_join.join_tables_num > 0) {
+    LOG_INFO("chu li inner join");
+    inner_join_stmt = new InnerJoinStmt();
+    create_inner_join_stmt(db, select_sql, default_table, &table_map, inner_join_stmt);
   }
 
   std::vector<AggrFuncCXX> aggr_funcs_t;  // for 聚合函数
@@ -265,9 +309,8 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
   select_stmt->tables_.swap(tables);
   select_stmt->query_fields_.swap(query_fields);
   select_stmt->aggr_funcs_.swap(aggr_funcs_t);
+  select_stmt->inner_join_stmt_ = inner_join_stmt;
   select_stmt->filter_stmt_ = filter_stmt;
-  select_stmt->aggr_fun_ = select_sql.aggr_type;
-  select_stmt->aggr_arg_num_ = select_sql.aggr_arg_num;
   stmt = select_stmt;
   return RC::SUCCESS;
 }

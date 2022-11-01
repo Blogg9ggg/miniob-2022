@@ -40,13 +40,23 @@ void aggr_func_init(AggrFunc *aggr_func, AggrType type, RelAttr *attribute)
 
 void aggr_func_destroy(AggrFunc *aggr_func)
 {
+  if (aggr_func == nullptr) {
+    return;
+  }
   relation_attr_destroy(&aggr_func->attribute);
 }
 
 void relation_attr_destroy(RelAttr *relation_attr)
 {
-  free(relation_attr->relation_name);
-  free(relation_attr->attribute_name);
+  if (relation_attr == nullptr) {
+    return;
+  }
+  if (relation_attr->relation_name != nullptr) {
+    free(relation_attr->relation_name);
+  }
+  if (relation_attr->attribute_name != nullptr) {
+    free(relation_attr->attribute_name);
+  }
   relation_attr->relation_name = nullptr;
   relation_attr->attribute_name = nullptr;
 }
@@ -100,8 +110,13 @@ int value_init_date(Value* value, const char* v) {
 }
 void value_destroy(Value *value)
 {
+  if (value == nullptr) {
+    return;
+  }
   value->type = UNDEFINED;
-  free(value->data);
+  if (value->data != nullptr) {
+    free(value->data);
+  }
   value->data = nullptr;
 }
 
@@ -125,6 +140,9 @@ void condition_init(Condition *condition, CompOp comp, int left_is_attr, RelAttr
 }
 void condition_destroy(Condition *condition)
 {
+  if (condition == nullptr) {
+    return;
+  }
   if (condition->left_is_attr) {
     relation_attr_destroy(&condition->left_attr);
   } else {
@@ -145,7 +163,12 @@ void attr_info_init(AttrInfo *attr_info, const char *name, AttrType type, size_t
 }
 void attr_info_destroy(AttrInfo *attr_info)
 {
-  free(attr_info->name);
+  if (attr_info == nullptr) {
+    return;
+  }
+  if (attr_info->name != nullptr) {
+    free(attr_info->name);
+  }
   attr_info->name = nullptr;
 }
 
@@ -174,19 +197,22 @@ void selects_append_conditions(Selects *selects, Condition conditions[], size_t 
 
 void join_table_destroy(JoinTable *join_table)
 {
+  if (join_table == nullptr) {
+    return;
+  }
   for (size_t i = 0; i < join_table->condition_num; i++) {
     condition_destroy(&(join_table->conditions[i]));
   }
   join_table->condition_num = 0;
 
-  if (join_table->relation_name) {
+  if (join_table->relation_name != nullptr) {
     free(join_table->relation_name);
   }
-  join_table->relation_name = 0;
+  join_table->relation_name = nullptr;
 }
 void inner_join_destroy(InnerJoin *inner_join)
 {
-  if (!(inner_join->join_tables_num)) {
+  if (inner_join == nullptr || (inner_join->join_tables_num) == 0) {
     return;
   }
   for (size_t i = 0; i < (inner_join->join_tables_num); i++) {
@@ -194,13 +220,16 @@ void inner_join_destroy(InnerJoin *inner_join)
   }
   inner_join->join_tables_num = 0;
 
-  if (inner_join->first_relation) {
+  if (inner_join->first_relation != nullptr) {
     free(inner_join->first_relation);
   }
-  inner_join->first_relation = 0;
+  inner_join->first_relation = nullptr;
 }
 void selects_destroy(Selects *selects)
 {
+  if (selects == nullptr) {
+    return;
+  }
   inner_join_destroy(&selects->inner_join);
 
   selects->aggr_type = NO_FUN;
@@ -216,8 +245,10 @@ void selects_destroy(Selects *selects)
   selects->attr_num = 0;
 
   for (size_t i = 0; i < selects->relation_num; i++) {
-    free(selects->relations[i]);
-    selects->relations[i] = NULL;
+    if (selects->relations[i] != nullptr) {
+      free(selects->relations[i]);
+    }
+    selects->relations[i] = nullptr;
   }
   selects->relation_num = 0;
 
@@ -262,7 +293,9 @@ void inserts_init_appends_rows_values(Inserts *inserts, Value values[], size_t v
 //小王同学：⼀次插入多条数据
 void inserts_destroy(Inserts *inserts)
 {
-  free(inserts->relation_name);
+  if (inserts->relation_name != nullptr) {
+    free(inserts->relation_name);
+  }
   inserts->relation_name = nullptr;
 
   // for (size_t i = 0; i < inserts->value_num; i++) {
@@ -271,9 +304,9 @@ void inserts_destroy(Inserts *inserts)
   // inserts->value_num = 0;
 
     for (size_t i = 0; i < inserts->values_num; i++) {
-        Valuesitem* pvalue = &inserts->values_item[i];
-        for (size_t i = 0; i < pvalue->value_num; i++) {
-            value_destroy(&pvalue->values[i]);
+      Valuesitem* pvalue = &inserts->values_item[i];
+      for (size_t j = 0; j < pvalue->value_num; j++) {
+          value_destroy(&pvalue->values[j]);
       }
     }
    inserts->values_num = 0;
@@ -440,8 +473,13 @@ void load_data_init(LoadData *load_data, const char *relation_name, const char *
 
 void load_data_destroy(LoadData *load_data)
 {
-  free((char *)load_data->relation_name);
-  free((char *)load_data->file_name);
+  if (load_data->relation_name != nullptr) {
+    free((char *)load_data->relation_name);
+  }
+  if (load_data->file_name != nullptr) {
+    free((char *)load_data->file_name);
+  }
+  
   load_data->relation_name = nullptr;
   load_data->file_name = nullptr;
 }

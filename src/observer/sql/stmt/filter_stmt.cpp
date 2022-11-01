@@ -28,8 +28,7 @@ FilterStmt::~FilterStmt()
 }
 
 RC FilterStmt::create(Db *db, Table *default_table, std::unordered_map<std::string, Table *> *tables,
-		      const Condition *conditions, int condition_num,
-		      FilterStmt *&stmt)
+  const Condition *conditions, int condition_num, FilterStmt *&stmt)
 {
   RC rc = RC::SUCCESS;
   stmt = nullptr;

@@ -40,6 +40,7 @@ enum class StmtType
   EXIT,
 
   PREDICATE,
+  INNER_JOIN,
 };
 
 class Stmt 

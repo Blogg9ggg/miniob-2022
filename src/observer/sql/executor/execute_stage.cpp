@@ -42,6 +42,7 @@ See the Mulan PSL v2 for more details. */
 #include "sql/stmt/delete_stmt.h"
 #include "sql/stmt/insert_stmt.h"
 #include "sql/stmt/filter_stmt.h"
+#include "sql/stmt/inner_join_stmt.h"
 #include "sql/stmt/aggregate_function.h"
 #include "storage/common/table.h"
 #include "storage/common/field.h"
@@ -52,6 +53,7 @@ See the Mulan PSL v2 for more details. */
 #include "storage/clog/clog.h"
 #include "sql/operator/update_operator.h"
 #include "sql/operator/cartesian_operator.h"
+#include "sql/operator/inner_join_operator.h"
 
 using namespace common;
 
@@ -715,12 +717,91 @@ RC do_aggr_func_count(std::ostream &os, ProjectOperator *project_oper)
   return RC::SUCCESS;
 }
 
+// TODO: 现在功能呢都是单独实现的, 后续需要将它们做一下合并
 RC ExecuteStage::do_select(SQLStageEvent *sql_event)
 {
   SelectStmt *select_stmt = (SelectStmt *)(sql_event->stmt());
   SessionEvent *session_event = sql_event->session_event();
   std::stringstream ss;
   RC rc = RC::SUCCESS;
+
+  // ================== Inner Join实验区 =================
+  if (select_stmt->inner_join_stmt() != nullptr) {
+    LOG_INFO("inner join lab.");
+    InnerJoinOperator *inner_join_oper = 
+      new InnerJoinOperator(select_stmt->inner_join_stmt(), select_stmt->tables().size());
+     
+    int tid = 0;
+    // 由于前面有做倒序处理, 这里直接正序遍历即可
+    for (size_t t = 0; t < select_stmt->tables().size(); t++) {
+      Table *now_table = select_stmt->tables()[t];
+      const TableMeta now_table_meta = now_table->table_meta();
+      const char *now_table_name = now_table->name();
+      inner_join_oper->update_map(static_cast<std::string>(now_table_name), tid);
+
+      const std::vector<FieldMeta> *field_metas = now_table->table_meta().field_metas();
+      for(size_t i = 0; i < field_metas->size(); i++) {
+        FieldExpr *field_expr = new FieldExpr(now_table, &field_metas->at(i));
+        TupleCellSpec *tuple_cell_spec = new TupleCellSpec(field_expr);
+        inner_join_oper->update_spece_vec(tid, tuple_cell_spec);
+      }
+
+      Operator *scan_oper = try_to_create_index_scan_operator(select_stmt->filter_stmt(), now_table);
+      if (nullptr == scan_oper) {
+        scan_oper = new TableScanOperator(now_table);
+      }
+      PredicateOperator *pred_oper = new PredicateOperator(select_stmt->filter_stmt());
+      pred_oper->add_child(scan_oper);
+      inner_join_oper->add_child(pred_oper);
+
+      pred_oper->open();
+      while ((rc = pred_oper->next()) == RC::SUCCESS) {
+        // 由于 TableScanOperator 内部实现的缘故, 这里的 tuple 指针永远不变, 所以需要把里面的数据拷贝出来
+        Tuple *tuple = pred_oper->current_tuple();
+        
+        if (nullptr == tuple) {
+          rc = RC::INTERNAL;
+          LOG_WARN("failed to get current record. rc=%s", strrc(rc));
+          break;
+        }
+
+        if (inner_join_oper->update_tuple_vec(tid, tuple) != RC::SUCCESS) {
+          LOG_WARN("SOMETHING ERROR.");
+        }
+      }
+
+      // Endding
+      tid++;
+    }
+
+    ProjectOperator *project_oper = new ProjectOperator();
+    project_oper->add_child(inner_join_oper);
+
+    if ((rc = project_oper->open()) != RC::SUCCESS) {
+      return rc;
+    }
+
+    std::vector<int> tmp(inner_join_oper->size());
+    LOG_INFO("inner join oper size = %d", inner_join_oper->size());
+    inner_join_oper->dfs(0, tmp);
+
+    inner_join_oper->test(ss);
+
+    
+    // 开始做映射
+    for (const Field &field : select_stmt->query_fields()) {
+      project_oper->add_projection_CP(field);
+    }
+    project_oper->print_result_CP_new(ss);
+
+    session_event->set_response(ss.str());// 测试
+
+    project_oper->close();
+    delete project_oper;
+    project_oper = nullptr;
+
+    return RC::SUCCESS;
+  }
 
   // =================== 多表查询实验区 ===================
   if (select_stmt->tables().size() != 1) {
@@ -767,14 +848,10 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
         if (merge_oper->update_lists(tid, tuple) != RC::SUCCESS) {
           LOG_WARN("SOMETHING ERROR.");
         }
-
-        // tuple_to_string(ss, *tuple);  // 测试
-        // ss << std::endl;
       }
 
       // Endding
       tid++;
-      // session_event->set_response(ss.str());// 测试
     }
 
     ProjectOperator *project_oper = new ProjectOperator();
@@ -783,7 +860,6 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
     if ((rc = project_oper->open()) != RC::SUCCESS) {
       return rc;
     }
-    // merge_oper->open();
 
     // 计算笛卡尔积的结果
     std::vector<int> tmp(merge_oper->size());
@@ -954,6 +1030,7 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
   // Table *default_table = select_stmt->tables()[0]; // default_table 暂时没有用到, 先注释掉
   Operator *scan_oper = try_to_create_index_scan_operator(select_stmt->filter_stmt(), select_stmt->tables()[0]);
   if (nullptr == scan_oper) {
+    LOG_INFO("have no index.");
     scan_oper = new TableScanOperator(select_stmt->tables()[0]);
   }
   // DEFER([&]() { delete scan_oper; });

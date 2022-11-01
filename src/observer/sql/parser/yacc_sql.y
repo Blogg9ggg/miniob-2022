@@ -411,18 +411,17 @@ update:			/*  update 语句的语法解析树*/
 		}
     ;
 select:				/*  select 语句的语法解析树*/
-	SELECT select_attr FROM ID INNER JOIN ID on_list inner_joins where SEMICOLON
+	SELECT select_attr FROM ID INNER JOIN ID on_list inner_joins select_where SEMICOLON
 	{
 		join_table_init(&CONTEXT->join_tables[CONTEXT->join_table_length], $7, CONTEXT->conditions, CONTEXT->condition_length);
 		CONTEXT->join_table_length++;
+		CONTEXT->condition_length=0;
 
 		selects_init_inner_join(&CONTEXT->ssql->sstr.selection.inner_join, $4, CONTEXT->join_tables, CONTEXT->join_table_length);
 		
-		selects_append_conditions(&CONTEXT->ssql->sstr.selection, CONTEXT->conditions, CONTEXT->condition_length);
 		CONTEXT->ssql->flag=SCF_SELECT;//"select";
 
 		//临时变量清零
-		CONTEXT->condition_length=0;
 		CONTEXT->value_length = 0;
 	}
 	| SELECT select_attr FROM ID rel_list where SEMICOLON
@@ -652,12 +651,19 @@ rel_list:
 				selects_append_relation(&CONTEXT->ssql->sstr.selection, $2);
 		  }
     ;
+select_where:
+	/* empty */
+	| WHERE condition condition_list {	
+		selects_append_conditions(&CONTEXT->ssql->sstr.selection, CONTEXT->conditions, CONTEXT->condition_length);
+		CONTEXT->condition_length = 0;
+	}
+	;
 where:
-    /* empty */ 
-    | WHERE condition condition_list {	
-				// CONTEXT->conditions[CONTEXT->condition_length++]=*$2;
-			}
-    ;
+	/* empty */ 
+	| WHERE condition condition_list {	
+
+	}
+	;
 condition_list:
     /* empty */
     | AND condition condition_list {

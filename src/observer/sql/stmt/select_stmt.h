@@ -20,6 +20,7 @@ See the Mulan PSL v2 for more details. */
 #include "sql/stmt/stmt.h"
 #include "storage/common/field.h"
 #include "aggregate_function.h"
+#include "inner_join_stmt.h"
 
 class FieldMeta;
 class FilterStmt;
@@ -29,28 +30,30 @@ class Table;
 class SelectStmt : public Stmt
 {
 public:
-
   SelectStmt() = default;
   ~SelectStmt() override;
-
   StmtType type() const override { return StmtType::SELECT; }
+
 public:
   static RC create(Db *db, const Selects &select_sql, Stmt *&stmt);
+
+  static RC create_inner_join_stmt(Db *db, const Selects &select_sql, Table *default_table, 
+    std::unordered_map<std::string, Table *> *table_map, InnerJoinStmt *&inner_join_stmt);
 
 public:
   const std::vector<Table *> &tables() const { return tables_; }
   const std::vector<Field> &query_fields() const { return query_fields_; }
   const std::vector<AggrFuncCXX> &aggr_funcs() const { return aggr_funcs_; }
+  
   FilterStmt *filter_stmt() const { return filter_stmt_; }
-  int aggr_fun() const { return aggr_fun_; }
-  int aggr_arg_num() const { return aggr_arg_num_; }
+  InnerJoinStmt *inner_join_stmt() const { return inner_join_stmt_; }
 
 private:
-  int aggr_fun_;  // 李立基: 加入指示使用什么聚合函数的字段
-  int aggr_arg_num_;      // 李立基: 用于处理聚合函数中以数字为参数的情况.
   std::vector<AggrFuncCXX> aggr_funcs_;
   std::vector<Field> query_fields_;
   std::vector<Table *> tables_;
+
   FilterStmt *filter_stmt_ = nullptr;
+  InnerJoinStmt *inner_join_stmt_ = nullptr;
 };
 

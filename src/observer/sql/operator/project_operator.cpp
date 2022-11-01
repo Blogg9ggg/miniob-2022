@@ -16,6 +16,7 @@ See the Mulan PSL v2 for more details. */
 #include "sql/operator/operator.h"
 #include "sql/operator/cartesian_operator.h"
 #include "sql/operator/project_operator.h"
+#include "sql/operator/inner_join_operator.h"
 #include "storage/record/record.h"
 #include "storage/common/table.h"
 
@@ -93,6 +94,7 @@ RC ProjectOperator::print_title_CP(std::ostream &os)
   return RC::SUCCESS;
 }
 
+
 RC ProjectOperator::print_result_CP(std::ostream &os)
 {
   print_title_CP(os);
@@ -131,6 +133,53 @@ RC ProjectOperator::print_result_CP(std::ostream &os)
         break;
       }
       cartesian_oper->find_cell(field, table_id, tmp_result->at(table_id), cell);
+
+      cell.to_string(os);
+    }
+    os << std::endl;
+  }
+
+  return RC::SUCCESS;
+}
+
+RC ProjectOperator::print_result_CP_new(std::ostream &os)
+{
+  print_title_CP(os);
+
+  InnerJoinOperator *oper = dynamic_cast<InnerJoinOperator *>(this->children_[0]);;
+  if (oper == nullptr) {
+    LOG_ERROR("isn't a (InnerJoinOperator *) ptr.");
+    return RC::GENERIC_ERROR;
+  }
+
+  int len = oper->result_size();
+
+  for (int i = 0; i < len; i++) {
+    std::vector<int> *tmp_result = nullptr;
+    if (oper->result_at(i, tmp_result) != RC::SUCCESS) {
+      LOG_WARN("i = %d(%d), SOMETHING ERROR", i, len);
+      break;
+    }
+    if (tmp_result == nullptr) {
+      LOG_WARN("SOMETHING ERROR");
+      continue;
+    }
+
+    for (int j = 0; j < this->fields_CP_.size(); j++) {
+      if (j > 0) {
+        os << " | ";
+      }
+
+      Field &field = *fields_CP_[j];
+      const char *table_name = field.table_name();
+      int table_id = oper->table_name2id(table_name);
+      TupleCell cell;
+
+      if (tmp_result->empty() || table_id >= tmp_result->size()) {
+        LOG_WARN("SOMETHING ERROR");
+        break;
+      }
+      oper->find_cell(field, table_id, tmp_result->at(table_id), cell);
 
       cell.to_string(os);
     }

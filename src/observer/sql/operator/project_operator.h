@@ -30,6 +30,7 @@ public:
   RC add_projection_CP(const Field &field);
   RC print_title_CP(std::ostream &os);
   RC print_result_CP(std::ostream &os);
+  RC print_result_CP_new(std::ostream &os);
 
   RC open() override;
   RC next() override;
